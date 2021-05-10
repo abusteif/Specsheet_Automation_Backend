@@ -14,20 +14,33 @@ import os
 import shutil
 from copy import deepcopy
 from uuid import uuid4
+import time
 
-def convert_DUT_UECI_files_hex_to_list(UECapabilityInformation_hex, UECapabilityInformation_converted_hex,
-                                       UECapabilityInformation_pcap, UECapabilityInfo_json, UECapabilityInfo_lists,
-                                       DUT_UECI_excepted_elements_list, file_type):
+def convert_DUT_UECI_files_hex_to_list(UECapabilityInformation_hex, DUT_UECI_excepted_elements_list, file_type, folder_path):
+
     try:
         print("Converting Hex to lists")
-        crhtwr = convert_raw_hex_to_ws_readable_hex(UECapabilityInformation_hex, UECapabilityInformation_converted_hex)
-        cwhtp = convert_ws_hex_to_pcap(UECapabilityInformation_converted_hex, UECapabilityInformation_pcap)
-        cptj = convert_pcap_to_json(UECapabilityInformation_pcap, UECapabilityInfo_json, file_type)
-        cjtl = convert_json_to_lists(UECapabilityInfo_json, UECapabilityInfo_lists, DUT_UECI_excepted_elements_list)
-        for result in [crhtwr, cwhtp, cptj, cjtl]:
-            if not result[0]:
-                return False, result[1]
-        return True, "conversion successful"
+        start_index = 0
+
+        while 1:
+            # time.sleep(5)
+            hex_file = get_full_temp_path(UECapabilityInformation_converted_hex_file, folder_path)
+            pcap_file = get_full_temp_path(UECapabilityInformation_pcap_file, folder_path)
+            json_file = get_full_temp_path(UECapabilityInfo_json_file, folder_path)
+            lists_file = get_full_temp_path(UECapabilityInfo_lists_file, folder_path)
+
+            crhtwr = convert_raw_hex_to_ws_readable_hex(UECapabilityInformation_hex, hex_file, file_type, start_index)
+            print(crhtwr)
+            if crhtwr[0]:
+                start_index = crhtwr[1]
+            else:
+                return False, "Error while converting data"
+            convert_ws_hex_to_pcap(hex_file, pcap_file)
+            convert_pcap_to_json(pcap_file, json_file, file_type)
+            cjtl = convert_json_to_lists(json_file, lists_file, DUT_UECI_excepted_elements_list)
+            print(cjtl)
+            if cjtl[0]:
+                return True, "conversion successful"
     except Exception as e:
         return False, "Error while converting data: {}".format(repr(e))
 
@@ -97,7 +110,6 @@ def get_ie_results_from_jira(message_type, sim_type, dut_name, iot_cycle, jira_t
             "individualIE": individual_ie
         }
     except Exception as e:
-        print(ie)
         return False, "Error occurred while getting test results from Jira: {}".format(repr(e))
 
 def check_if_test_case_executed(message_type, sim_type, dut_name, iot_cycle, jira_token):
@@ -123,6 +135,7 @@ def cleanup_files(files_directory):
         return False, "Error while deleting the temp files directory: {}".format(repr(e))
 
 def get_full_temp_path(file_name, folder_path):
+    print(temp_files_folder / folder_path / file_name)
     return temp_files_folder / folder_path / file_name
 
 def create_files_folder(name):
@@ -134,21 +147,18 @@ def create_files_folder(name):
 
         return False, "Error while creating a folder: {}".format(repr(e))
 
-def convert(hex_data, unique_folder_path, message_type):
-    hex_file = get_full_temp_path(UECapabilityInformation_converted_hex_file, unique_folder_path)
-    pcap_file = get_full_temp_path(UECapabilityInformation_pcap_file, unique_folder_path)
-    json_file = get_full_temp_path(UECapabilityInfo_json_file, unique_folder_path)
-    lists_file = get_full_temp_path(UECapabilityInfo_lists_file, unique_folder_path)
-
-    return convert_DUT_UECI_files_hex_to_list(hex_data, hex_file, pcap_file, json_file, lists_file,
-                                              DUT_UECI_excepted_elements, message_type)
+# def convert(hex_data, unique_folder_path, message_type):
+#     hex_file = get_full_temp_path(UECapabilityInformation_converted_hex_file, unique_folder_path)
+#     pcap_file = get_full_temp_path(UECapabilityInformation_pcap_file, unique_folder_path)
+#     json_file = get_full_temp_path(UECapabilityInfo_json_file, unique_folder_path)
+#     lists_file = get_full_temp_path(UECapabilityInfo_lists_file, unique_folder_path)
+#
+#     return convert_DUT_UECI_files_hex_to_list(hex_data, DUT_UECI_excepted_elements, message_type, unique_folder_path)
 
 def extract_data(hex_data, message_type, unique_id=None):
     new_id = unique_id if unique_id else str(uuid4())
-
     unique_folder_path = create_files_folder(new_id)
     if not unique_folder_path[0]:
-        return unique_folder_path[1]
+        return [unique_folder_path[0], unique_folder_path[1]], None
     unique_folder_path = unique_folder_path[1]
-
-    return convert(hex_data, unique_folder_path, message_type), unique_folder_path
+    return convert_DUT_UECI_files_hex_to_list(hex_data, DUT_UECI_excepted_elements, message_type, unique_folder_path), unique_folder_path

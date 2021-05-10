@@ -58,16 +58,22 @@ class DataAnalysis:
         return self.list_items["release_8,rf-Parameters,supportedBandListEUTRA,SupportedBandEUTRA,bandEUTRA"]
 
     def release_8_interFreqNeedForGaps(self):
-        interFreqNeedForGaps = self.list_items["release_8,measParameters,bandListEUTRA,BandInfoEUTRA,interFreqBandList,"
-                                               "InterFreqBandInfo,interFreqNeedForGaps"]
+        try:
+            interFreqNeedForGaps = self.list_items["release_8,measParameters,bandListEUTRA,BandInfoEUTRA,interFreqBandList,"
+                                                   "InterFreqBandInfo,interFreqNeedForGaps"]
+        except KeyError:
+            return "No Information"
         for i in interFreqNeedForGaps:
             if i != "1":
                 return "FALSE"
         return "TRUE"
 
     def release_8_interRatNeedForGaps(self):
-        interRatNeedForGaps = self.list_items["release_8,measParameters,bandListEUTRA,BandInfoEUTRA,interRAT-BandList,"
-                                              "InterRAT-BandInfo,interRAT-NeedForGaps"]
+        try:
+            interRatNeedForGaps = self.list_items["release_8,measParameters,bandListEUTRA,BandInfoEUTRA,interRAT-BandList,"
+                                                  "InterRAT-BandInfo,interRAT-NeedForGaps"]
+        except KeyError:
+            return "No Information"
         for i in interRatNeedForGaps:
             if i != "1":
                 return "FALSE"
@@ -79,10 +85,12 @@ class DataAnalysis:
                          "bandXVIII-8a0", "bandXIX-8a0", "bandXX-8a0", "bandXXI-8a0", "bandXXII-8a0", "bandXXIII-8a0",
                          "bandXXIV-8a0", "bandXXV-8a0", "bandXXVI-8a0", "bandXXVII-8a0", "bandXXVIII-8a0",
                          "bandXXIX-8a0", "bandXXX-8a0", "bandXXXI-8a0", "bandXXXII-8a0"]
-
-        mapped_bands = [utraFDD_bands[int(band)] for band in
-                        self.list_items[
-                            "release_8,interRAT-Parameters,utraFDD,supportedBandListUTRA-FDD,SupportedBandUTRA-FDD"]]
+        try:
+            mapped_bands = [utraFDD_bands[int(band)] for band in
+                            self.list_items[
+                                "release_8,interRAT-Parameters,utraFDD,supportedBandListUTRA-FDD,SupportedBandUTRA-FDD"]]
+        except KeyError:
+            return ["UTRAN not supported"]
         return mapped_bands
 
     def geran(self):

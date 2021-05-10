@@ -2,7 +2,7 @@ from subprocess import check_output
 from Specsheet_Automation.static_data.tools_info import text2pcap_path, tshark_path
 import json
 
-def convert_raw_hex_to_ws_readable_hex(input_hex, output_hex_file):
+def convert_raw_hex_to_ws_readable_hex(input_hex, output_hex_file, file_type, start_index):
     try:
         def add_zeros(hex_num):
             return "".join(["0"] * (5 - hex_num.__len__())) + hex_num
@@ -10,8 +10,12 @@ def convert_raw_hex_to_ws_readable_hex(input_hex, output_hex_file):
         input_hex = input_hex.strip()
         input_hex = "".join(input_hex.split(" "))
         raw_hex_data = []
-        assert ("3802" in input_hex)
-        input_hex = input_hex[input_hex.index("3802"):]
+        new_index = 0
+        if "UECapabilityInformation" in file_type:
+            new_index = input_hex.find("380", start_index, input_hex.__len__())
+            assert new_index != -1
+            # assert ("38" in input_hex)
+            input_hex = input_hex[new_index:]
         for i in range(0, input_hex.__len__() - 1, 2):
             raw_hex_data.append(input_hex[i] + input_hex[i + 1])
         with open(output_hex_file, "w") as converted_file:
@@ -21,7 +25,7 @@ def convert_raw_hex_to_ws_readable_hex(input_hex, output_hex_file):
             for j in range(1, length_list.__len__()):
                 converted_file.write(prefix + " ".join(raw_hex_data[length_list[j - 1]:length_list[j]]) + "\n")
                 prefix = add_zeros(str(hex(length_list[j]))[2:]) + " "
-        return True, "Successfully converted HEX to Wireshark readable HEX"
+        return True, new_index + 1
     except Exception as e:
         return False, "Error while converting HEX to Wireshark readable HEX: {}".format(repr(e))
 
@@ -34,7 +38,7 @@ def convert_ws_hex_to_pcap(input_hex_file, output_pcap_file):
         return False, "Error while converting HEX to PCAP: {}".format(repr(e))
 
 
-def convert_pcap_to_json(input_pcap_file, output_json_file, file_type="UE Capability Information - 4G"):
+def convert_pcap_to_json(input_pcap_file, output_json_file, file_type="UECapabilityInformation_4G"):
     try:
         # dissect = "lte-rrc.ul.dcch" if file_type == "UE Capability Information - 4G" else "nas-eps"
         dissect = "lte-rrc.ul.dcch" if "UECapabilityInformation" in file_type else "nas-eps"
@@ -81,6 +85,19 @@ def convert_json_to_lists(input_json_file, output_lists_file, excepted_elements)
                 lines = lines[0]
             with open(output_lists_file, "w") as output_file:
                 convert_json_to_lists_helper(lines, [], [], output_file, excepted_elements)
+        with open(output_lists_file, "r") as complete_output_file:
+            complete_lines = complete_output_file.readlines()
+            found = False
+            for li in complete_lines:
+                if "CapabilityRAT_ContainerList," in li:
+                    found = True
+                    print("found")
+                    if li.strip()[-1] == "0":
+                        return False, "Error while converting JSON to LIST"
+                    else:
+                        break
+        if not found:
+            return False, "Error while converting JSON to LIST"
         return True, "successfully converted JSON to LIST"
     except Exception as e:
         return False, "Error while converting JSON to LIST: {}".format(repr(e))

@@ -126,67 +126,79 @@ MSR0835_all_fields = [
         "release": "release_8",
         "path": "accessStratumRelease",
         "cell": "E37",
-        "values": ["rel8", "rel9", "rel10", "rel11", "rel12", "rel13", "rel14", "rel15", "rel16"]
+        "values": ["rel8", "rel9", "rel10", "rel11", "rel12", "rel13", "rel14", "rel15", "rel16"],
+        "default": "No Information"
     },
     {
         "release": "release_8",
         "path": "ue-Category",
         "cell": "E38",
-        "values": [None, "Cat1", "Cat2", "Cat3", "Cat4", "Cat5"]
+        "values": [None, "Cat1", "Cat2", "Cat3", "Cat4", "Cat5"],
+        "default": "No Information"
     },
     {
         "release": "release_8",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0001-r15"],
         "cell": "E40",
-        "values": ["profile0x0001_r15, FALSE", "profile0x0001_r15 TRUE"]
+        "values": ["profile0x0001_r15, FALSE", "profile0x0001_r15 TRUE"],
+        "default": "No Information"
+
     },
     {
         "release": "release_8",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0002-r15"],
         "cell": "E40",
-        "values": ["profile0x0002_r15, FALSE", "profile0x0002_r15 TRUE"]
+        "values": ["profile0x0002_r15, FALSE", "profile0x0002_r15 TRUE"],
+        "default": "No Information"
     },
     {
         "release": "release_8",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0003-r15"],
         "cell": "E40",
-        "values": ["profile0x0003_r15, FALSE", "profile0x0003_r15 TRUE"]
+        "values": ["profile0x0003_r15, FALSE", "profile0x0003_r15 TRUE"],
+        "default": "No Information"
     },
     {
         "release": "release_8",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0004-r15"],
         "cell": "E40",
-        "values": ["profile0x0004-r15, FALSE", "profile0x0004-r15 TRUE"]
+        "values": ["profile0x0004-r15, FALSE", "profile0x0004-r15 TRUE"],
+        "default": "No Information"
     },
     {
         "release": "release_8",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0006-r15"],
         "cell": "E40",
-        "values": ["profile0x0006-r15, FALSE", "profile0x0006-r15 TRUE"]
+        "values": ["profile0x0006-r15, FALSE", "profile0x0006-r15 TRUE"],
+        "default": "No Information"
     },
     {
         "release": "release_8",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0101-r15"],
         "cell": "E40",
-        "values": ["profile0x0101-r15, FALSE", "profile0x0101-r15 TRUE"]
+        "values": ["profile0x0101-r15, FALSE", "profile0x0101-r15 TRUE"],
+        "default": "No Information"
     },
     {
         "release": "release_8",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0102-r15"],
         "cell": "E40",
-        "values": ["profile0x0102-r15, FALSE", "profile0x0102-r15 TRUE"]
+        "values": ["profile0x0102-r15, FALSE", "profile0x0102-r15 TRUE"],
+        "default": "No Information"
     },
     {
         "release": "release_8",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0103-r15"],
         "cell": "E40",
-        "values": ["profile0x0103-r15, FALSE", "profile0x0103-r15 TRUE"]
+        "values": ["profile0x0103-r15, FALSE", "profile0x0103-r15 TRUE"],
+        "default": "No Information"
     },
     {
         "release": "release_8",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0104-r15"],
         "cell": "E40",
-        "values": ["profile0x0104-r15, FALSE", "profile0x0104-r15 TRUE"]
+        "values": ["profile0x0104-r15, FALSE", "profile0x0104-r15 TRUE"],
+        "default": "No Information"
     },
     {
         "release": "release_8",
@@ -200,13 +212,15 @@ MSR0835_all_fields = [
         "release": "release_8",
         "path": ["phyLayerParameters", "ue-TxAntennaSelectionSupported"],
         "cell": "E43",
-        "values": ["FALSE", "TRUE"]
+        "values": ["FALSE", "TRUE"],
+        "default": "No Information"
     },
     {
         "release": "release_8",
         "path": ["phyLayerParameters", "ue-SpecificRefSigsSupported"],
         "cell": "E44",
-        "values": ["FALSE", "TRUE"]
+        "values": ["FALSE", "TRUE"],
+        "default": "No Information"
     },
     {
         "release": "release_8",

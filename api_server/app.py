@@ -14,9 +14,6 @@ cors = CORS(app, resources={r"/*": {"origins": "*", "credentials": True}})
 app.config['PROPAGATE_EXCEPTIONS'] = True
 api = Api(app)
 
-# jira_lock_1 = True
-# jira_lock_2 = True
-
 class GenerateCookies(Resource):
     def get(self):
         for _ in range(MAX_RETRY_COUNT):
@@ -171,7 +168,10 @@ api.add_resource(SpecsheetIEFromJira, '/specsheetIEFromJira')
 api.add_resource(ExecutionStatus, '/executionStatus')
 
 if __name__ == '__main__':
-    app.run(host='e001560c796ce.wg.dir.telstra.com', port=5001 , debug=True)
+    if dev:
+        app.run(host=environment_url, port=5001, debug=True)
+    else:
+        serve(app, host=environment_url, port=5000)
+
     # app.run(host='0.0.0.0', port=5000, debug=True)
 
-    # serve(app, host='e001560c796ce.wg.dir.telstra.com', port=5000)
