@@ -168,10 +168,10 @@ api.add_resource(SpecsheetIEFromJira, '/specsheetIEFromJira')
 api.add_resource(ExecutionStatus, '/executionStatus')
 
 if __name__ == '__main__':
-    if dev:
-        app.run(host=environment_url, port=5001, debug=True)
+    if DEV:
+        app.run(host=ENVIRONMENT_URL, port=5001, debug=True)
     else:
-        serve(app, host=environment_url, port=5000)
+        serve(app, host=ENVIRONMENT_URL, port=5000)
 
     # app.run(host='0.0.0.0', port=5000, debug=True)
 

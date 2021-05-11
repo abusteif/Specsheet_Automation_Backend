@@ -91,7 +91,6 @@ def convert_json_to_lists(input_json_file, output_lists_file, excepted_elements)
             for li in complete_lines:
                 if "CapabilityRAT_ContainerList," in li:
                     found = True
-                    print("found")
                     if li.strip()[-1] == "0":
                         return False, "Error while converting JSON to LIST"
                     else:

@@ -42,7 +42,7 @@ def extract_and_populate_specsheet(hex_data, dut_name, iot_cycle):
 def validate_data(hex_data, message_type):
 
     converting = extract_data(hex_data, message_type)
-    # cleanup_files(converting[1])
+    cleanup_files(converting[1])
     return converting[0][0], converting[0][1]
 
 def check_for_execution(message_type, sim_type, dut_name, iot_cycle, jira_token):

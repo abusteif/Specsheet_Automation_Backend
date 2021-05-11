@@ -14,7 +14,6 @@ import os
 import shutil
 from copy import deepcopy
 from uuid import uuid4
-import time
 
 def convert_DUT_UECI_files_hex_to_list(UECapabilityInformation_hex, DUT_UECI_excepted_elements_list, file_type, folder_path):
 
@@ -23,14 +22,12 @@ def convert_DUT_UECI_files_hex_to_list(UECapabilityInformation_hex, DUT_UECI_exc
         start_index = 0
 
         while 1:
-            # time.sleep(5)
             hex_file = get_full_temp_path(UECapabilityInformation_converted_hex_file, folder_path)
             pcap_file = get_full_temp_path(UECapabilityInformation_pcap_file, folder_path)
             json_file = get_full_temp_path(UECapabilityInfo_json_file, folder_path)
             lists_file = get_full_temp_path(UECapabilityInfo_lists_file, folder_path)
 
             crhtwr = convert_raw_hex_to_ws_readable_hex(UECapabilityInformation_hex, hex_file, file_type, start_index)
-            print(crhtwr)
             if crhtwr[0]:
                 start_index = crhtwr[1]
             else:
@@ -38,7 +35,6 @@ def convert_DUT_UECI_files_hex_to_list(UECapabilityInformation_hex, DUT_UECI_exc
             convert_ws_hex_to_pcap(hex_file, pcap_file)
             convert_pcap_to_json(pcap_file, json_file, file_type)
             cjtl = convert_json_to_lists(json_file, lists_file, DUT_UECI_excepted_elements_list)
-            print(cjtl)
             if cjtl[0]:
                 return True, "conversion successful"
     except Exception as e:
@@ -98,7 +94,6 @@ def get_ie_results_from_jira(message_type, sim_type, dut_name, iot_cycle, jira_t
                     try:
                         individual_ie[ie["path"]] = ie["default"]
                     except KeyError as e:
-                        print(ie)
                         return False, "Error occurred while getting test results from Jira: {}".format(repr(e))
                 else:
                     if "values" in [*ie]:
@@ -135,7 +130,6 @@ def cleanup_files(files_directory):
         return False, "Error while deleting the temp files directory: {}".format(repr(e))
 
 def get_full_temp_path(file_name, folder_path):
-    print(temp_files_folder / folder_path / file_name)
     return temp_files_folder / folder_path / file_name
 
 def create_files_folder(name):
@@ -146,14 +140,6 @@ def create_files_folder(name):
     except Exception as e:
 
         return False, "Error while creating a folder: {}".format(repr(e))
-
-# def convert(hex_data, unique_folder_path, message_type):
-#     hex_file = get_full_temp_path(UECapabilityInformation_converted_hex_file, unique_folder_path)
-#     pcap_file = get_full_temp_path(UECapabilityInformation_pcap_file, unique_folder_path)
-#     json_file = get_full_temp_path(UECapabilityInfo_json_file, unique_folder_path)
-#     lists_file = get_full_temp_path(UECapabilityInfo_lists_file, unique_folder_path)
-#
-#     return convert_DUT_UECI_files_hex_to_list(hex_data, DUT_UECI_excepted_elements, message_type, unique_folder_path)
 
 def extract_data(hex_data, message_type, unique_id=None):
     new_id = unique_id if unique_id else str(uuid4())
