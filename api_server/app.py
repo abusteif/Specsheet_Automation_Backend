@@ -53,8 +53,6 @@ class PopulateSpecsheet(Resource):
 class UploadToJira(Resource):
 
     def post(self):
-        print("upload jira acquired token")
-        return "ok", 200
         data = request.get_json()
         dut_name = data["device"]
         iot_cycle = data["iotCycle"]

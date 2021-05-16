@@ -51,16 +51,17 @@ class DataAnalysis:
         self.interFreqBandList_r11 = None
         self.interFreqNeedForGaps_r11 = None
         self.interRAT_BandList_r11 = None
-        self.interRAT_NeedForGaps_r11 = None
+        # self.interRAT_NeedForGaps_r11 = None
         self.supportedBandwidthCombinationSet_r11 = None
+        self.multipleTimingAdvance_r11 = None
 
     def supportedBandListEUTRA(self):
         return self.list_items["release_8,rf-Parameters,supportedBandListEUTRA,SupportedBandEUTRA,bandEUTRA"]
 
     def release_8_interFreqNeedForGaps(self):
         try:
-            interFreqNeedForGaps = self.list_items["release_8,measParameters,bandListEUTRA,BandInfoEUTRA,interFreqBandList,"
-                                                   "InterFreqBandInfo,interFreqNeedForGaps"]
+            interFreqNeedForGaps = self.list_items["release_8,measParameters,bandListEUTRA,BandInfoEUTRA,"
+                                                   "interFreqBandList,InterFreqBandInfo,interFreqNeedForGaps"]
         except KeyError:
             return "No Information"
         for i in interFreqNeedForGaps:
@@ -70,7 +71,8 @@ class DataAnalysis:
 
     def release_8_interRatNeedForGaps(self):
         try:
-            interRatNeedForGaps = self.list_items["release_8,measParameters,bandListEUTRA,BandInfoEUTRA,interRAT-BandList,"
+            interRatNeedForGaps = self.list_items["release_8,measParameters,bandListEUTRA,"
+                                                  "BandInfoEUTRA,interRAT-BandList,"
                                                   "InterRAT-BandInfo,interRAT-NeedForGaps"]
         except KeyError:
             return "No Information"
@@ -107,6 +109,8 @@ class DataAnalysis:
 
     def get_r10_band_combinations(self):
         try:
+            # print(self.list_items[
+            #     "release_1020,rf-Parameters-v1020,supportedBandCombinatiodn-r10"])
             self.supportedBandCombination_r10 = self.list_items[
                 "release_1020,rf-Parameters-v1020,supportedBandCombination-r10"]
             self.BandCombinationParameters_r10 = self.list_items[
@@ -134,6 +138,7 @@ class DataAnalysis:
             self.supportedBandwidthCombinationSet_r10 = self.list_items[
                 "release_1060,rf-Parameters-v1060,supportedBandCombinationExt-r10,BandCombinationParametersExt-r10,"
                 "supportedBandwidthCombinationSet-r10"]
+
         except KeyError:
             return False
 
@@ -194,38 +199,70 @@ class DataAnalysis:
                 "release_1180,rf-Parameters-v1180,supportedBandCombinationAdd-r11,BandCombinationParameters-r11,"
                 "bandParameterList-r11,BandParameters-r11,bandParametersDL-r11,CA-MIMO-ParametersDL-r10,"
                 "supportedMIMO-CapabilityDL-r10"]
+        except KeyError:
+            pass
+        try:
             self.interFreqBandList_r11 = self.list_items[
                 "release_1180,rf-Parameters-v1180,supportedBandCombinationAdd-r11,BandCombinationParameters-r11,"
                 "bandInfoEUTRA-r11,interFreqBandList"]
+        except KeyError:
+            pass
+        try:
             self.interFreqNeedForGaps_r11 = self.list_items[
                 "release_1180,rf-Parameters-v1180,supportedBandCombinationAdd-r11,BandCombinationParameters-r11,"
                 "bandInfoEUTRA-r11,interFreqBandList,InterFreqBandInfo,interFreqNeedForGaps"]
-            self.interRAT_BandList_r11 = self.list_items[
-                "release_1180,rf-Parameters-v1180,supportedBandCombinationAdd-r11,BandCombinationParameters-r11,"
-                "bandInfoEUTRA-r11,interRAT-BandList"]
-            self.interRAT_NeedForGaps_r11 = self.list_items[
-                "release_1180,rf-Parameters-v1180,supportedBandCombinationAdd-r11,BandCombinationParameters-r11,"
-                "bandInfoEUTRA-r11,interRAT-BandList,InterRAT-BandInfo,interRAT-NeedForGaps"]
+        except KeyError:
+            pass
+        try:
             self.supportedBandwidthCombinationSet_r11 = self.list_items[
                 "release_1180,rf-Parameters-v1180,supportedBandCombinationAdd-r11,BandCombinationParameters-r11,"
                 "supportedBandwidthCombinationSet-r11"]
         except KeyError:
-            return False
+            pass
+        try:
+            self.multipleTimingAdvance_r11 = self.list_items[
+                "release_1180,rf-Parameters-v1180,supportedBandCombinationAdd-r11,BandCombinationParameters-r11,"
+                "multipleTimingAdvance-r11"]
+        except KeyError:
+            pass
+        try:
+            self.interRAT_BandList_r11 = self.list_items[
+                "release_1180,rf-Parameters-v1180,supportedBandCombinationAdd-r11,BandCombinationParameters-r11,"
+                "bandInfoEUTRA-r11,interRAT-BandList"]
+        except KeyError as e:
+            pass
 
-        inter_freq_r11 = get_start_end(self.interFreqBandList_r11, "<")
-        inter_rat_r11 = get_start_end(self.interRAT_BandList_r11, "<")
-        band_combinations_r11 = get_start_end(self.supportedBandCombinationAdd_r11)
+        inter_freq_r11 = get_start_end(self.interFreqBandList_r11, "<") if self.interFreqBandList_r11 else None
+        inter_rat_r11 = get_start_end(self.interRAT_BandList_r11, "<") if self.interRAT_BandList_r11 else None
+        band_combinations_r11 = get_start_end(self.supportedBandCombinationAdd_r11) \
+            if self.supportedBandCombinationAdd_r11 else None
         all_band_combinations = []
 
         def get_length(item):
-            return int(item[1]) - int(item[0])
+            return int(item[1]) - int(item[0]) if item.__len__() > 0 else 0
         start = 0
+        if not band_combinations_r11:
+            return
+        inter_rat_r11 = inter_rat_r11 if inter_rat_r11 else [[]]*band_combinations_r11.__len__()
+        inter_freq_r11 = inter_freq_r11 if inter_freq_r11 else [[]]*band_combinations_r11.__len__()
+
         for bc_r11, interf_r11, interr_r11 in zip(band_combinations_r11, inter_freq_r11, inter_rat_r11):
             bcs = "default"
             end = start + get_length(bc_r11) - get_length(interf_r11) - get_length(interr_r11)
             band_combs = get_start_end(self.bandParameterList_r11[start:end])
-            if get_length(band_combs[-1]) < 3:
+
+            # TODO: Check if "get_length(band_combs[0]) != 5" below is actually required
+            if get_length(band_combs[-1]) == 1 and get_length(band_combs[0]) != 5:
                 start = end - 1
+                band_combs = band_combs[:-1]
+                # This checks if there is uplink CA in which case it assumes the extra number is
+                # multipleTimingAdvance_r11
+                length_check = [True for b in band_combs if get_length(b) == 4]
+                if length_check.__len__() < 2:
+                    bcs = self.supportedBandwidthCombinationSet_r11.pop(0)
+            elif get_length(band_combs[-1]) == 2:
+                # This assumes that multipleTimingAdvance_r11 and supportedBandwidthCombinationSet_r11 are there
+                start = end - 2
                 band_combs = band_combs[:-1]
                 bcs = self.supportedBandwidthCombinationSet_r11.pop(0)
             elif band_combs.__len__() == 1 and get_length(band_combs[0]) == 5:
@@ -235,6 +272,9 @@ class DataAnalysis:
             else:
                 start = end
             all_band_combinations.append({"band_combs": band_combs, "bcs": bcs})
+        if self.supportedBandwidthCombinationSet_r11.__len__() > 0:
+            all_band_combinations[-1]["bcs"] = self.supportedBandwidthCombinationSet_r11.pop(0)
+        print( self.supportedBandwidthCombinationSet_r11)
 
         ul_counter = 0
         dl_counter = 0
@@ -253,10 +293,12 @@ class DataAnalysis:
                                        "class": self.ca_BandwidthClassDL_r10_r11[dl_counter],
                                        "mimo": self.supportedMIMO_CapabilityDL_r10_r11[dl_counter]})
                 dl_counter += 1
+            # print(new_comb)
             self.band_combinations.append(new_comb)
 
     def band_combinations_table(self):
-
+        # for i in self.band_combinations:
+        #     print(i)
         lte_bands = "B1"
         dl_cat = "B2"
         ul_cat = "B3"

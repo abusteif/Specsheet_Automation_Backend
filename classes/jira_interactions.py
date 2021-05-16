@@ -78,9 +78,7 @@ class JiraInteractions:
                         if not self.jira_operations.update_step_result_by_id(str(test_step["id"]),
                                                                       {"comment": results[test_step["step"]],
                                                                        "status": "1"})["status"]:
-                            print
-                        # results[test_step["step"]] = None
-
+                            print(test_step)
                 offset += 500
         except Exception as e:
             print("The following error was encountered while updating test results: {}\nPlease retry later."
