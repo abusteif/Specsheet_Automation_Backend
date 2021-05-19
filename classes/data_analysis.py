@@ -218,6 +218,7 @@ class DataAnalysis:
                 "release_1180,rf-Parameters-v1180,supportedBandCombinationAdd-r11,BandCombinationParameters-r11,"
                 "supportedBandwidthCombinationSet-r11"]
         except KeyError:
+            self.supportedBandwidthCombinationSet_r11 = []
             pass
         try:
             self.multipleTimingAdvance_r11 = self.list_items[
