@@ -3,38 +3,51 @@ from Specsheet_Automation.classes.Spec_UECI_Info_Extraction import convert_raw_h
 from Specsheet_Automation.classes.DUT_Spec_UECI_Info_Extraction import DUT_UECI_Info_Extraction
 from Specsheet_Automation.classes.jira_interactions import JiraInteractions
 from Specsheet_Automation.static_data.file_info import spec_UECI_categories_file, spec_UECI_warning_list_file, \
-    temp_files_folder, UECapabilityInformation_converted_hex_file, UECapabilityInformation_pcap_file, \
-    UECapabilityInfo_lists_file, UECapabilityInfo_json_file
-from Specsheet_Automation.static_data.specsheet_fields import MSR0835_all_fields
+    temp_files_folder, converted_hex_file_path, pcap_file_path, perm_files_folder, lists_file_path, json_file_path, \
+    spec_attach_request_sample_lists_file, spec_attach_request_sample_json_file, spec_attach_request_sample_pcap_file, \
+    spec_attach_request_sample_converted_hex_file
+from Specsheet_Automation.static_data.specsheet_fields import MSR0835_all_UECI_fields
 from Specsheet_Automation.classes.data_analysis import DataAnalysis
 from Specsheet_Automation.static_data.configuration import MAIN_JIRA_WDA_PROJECT_KEY, JIRA_TEST_CASE_KEYS, \
-    DUT_UECI_excepted_elements
+    DUT_UECI_excepted_elements, ATTACHREQUEST_DELIMITER, UECAPABILITYINFORMATION_DELIMITER, \
+    ATTACHREQUEST_MESSAGE_TYPE, UECAPABILITYINFORMATION_MESSAGE_TYPE, DUT_SPEC_ATTACH_REQUEST_EXCEPTED_ELEMENTS
+
 from Specsheet_Automation.static_data.specsheet_fields import jira_test_step_order_to_field_mapping
 import os
 import shutil
 from copy import deepcopy
 from uuid import uuid4
 
-def convert_DUT_UECI_files_hex_to_list(UECapabilityInformation_hex, DUT_UECI_excepted_elements_list, file_type, folder_path):
+def convert_hex_to_list(hex_data, excepted_elements_list, file_type, folder_path, temp, delimiter, file_info):
 
     try:
         print("Converting Hex to lists")
         start_index = 0
+        if file_info:
+            chfp = file_info["chfp"]
+            pfp = file_info["pfp"]
+            jfp = file_info["jfp"]
+            lfp = file_info["lfp"]
+        else:
+            chfp = converted_hex_file_path
+            pfp = pcap_file_path
+            jfp = json_file_path
+            lfp = lists_file_path
 
         while 1:
-            hex_file = get_full_temp_path(UECapabilityInformation_converted_hex_file, folder_path)
-            pcap_file = get_full_temp_path(UECapabilityInformation_pcap_file, folder_path)
-            json_file = get_full_temp_path(UECapabilityInfo_json_file, folder_path)
-            lists_file = get_full_temp_path(UECapabilityInfo_lists_file, folder_path)
+            hex_file = get_full_path(chfp, folder_path, temp)
+            pcap_file = get_full_path(pfp, folder_path, temp)
+            json_file = get_full_path(jfp, folder_path, temp)
+            lists_file = get_full_path(lfp, folder_path, temp)
 
-            crhtwr = convert_raw_hex_to_ws_readable_hex(UECapabilityInformation_hex, hex_file, file_type, start_index)
+            crhtwr = convert_raw_hex_to_ws_readable_hex(hex_data, hex_file, start_index, delimiter)
             if crhtwr[0]:
                 start_index = crhtwr[1]
             else:
                 return False, "Error while converting data"
             convert_ws_hex_to_pcap(hex_file, pcap_file)
             convert_pcap_to_json(pcap_file, json_file, file_type)
-            cjtl = convert_json_to_lists(json_file, lists_file, DUT_UECI_excepted_elements_list)
+            cjtl = convert_json_to_lists(json_file, lists_file, excepted_elements_list, file_type)
             if cjtl[0]:
                 return True, "conversion successful"
     except Exception as e:
@@ -80,7 +93,7 @@ def get_ie_results_from_jira(message_type, sim_type, dut_name, iot_cycle, jira_t
         data_analysis.get_r11_band_combinations()
         band_combs = data_analysis.band_combinations_list()
         jira_test_cases = jira_test_cases[1]
-        MSR0835_all_fields_copy = deepcopy(MSR0835_all_fields)
+        MSR0835_all_fields_copy = deepcopy(MSR0835_all_UECI_fields)
         for ie in MSR0835_all_fields_copy:
             if "processor" in [*ie]:
                 individual_ie[ie["processor"]] = data_analysis.processors[ie["processor"]]()
@@ -129,8 +142,11 @@ def cleanup_files(files_directory):
     except Exception as e:
         return False, "Error while deleting the temp files directory: {}".format(repr(e))
 
-def get_full_temp_path(file_name, folder_path):
-    return temp_files_folder / folder_path / file_name
+def get_full_path(file_name, folder_path, temp):
+    if temp:
+        return temp_files_folder / folder_path / file_name
+    else:
+        return perm_files_folder / file_name
 
 def create_files_folder(name):
     unique_folder_path = temp_files_folder / name
@@ -141,10 +157,31 @@ def create_files_folder(name):
 
         return False, "Error while creating a folder: {}".format(repr(e))
 
-def extract_data(hex_data, message_type, unique_id=None):
+def extract_data(hex_data, message_type, delimiter, temp=True, unique_id=None):
+    file_info = None
+    excepted_elements = None
     new_id = unique_id if unique_id else str(uuid4())
     unique_folder_path = create_files_folder(new_id)
     if not unique_folder_path[0]:
         return [unique_folder_path[0], unique_folder_path[1]], None
     unique_folder_path = unique_folder_path[1]
-    return convert_DUT_UECI_files_hex_to_list(hex_data, DUT_UECI_excepted_elements, message_type, unique_folder_path), unique_folder_path
+    if not temp and message_type == ATTACHREQUEST_MESSAGE_TYPE:
+        file_info = {
+            "chfp": spec_attach_request_sample_converted_hex_file,
+            "pfp": spec_attach_request_sample_pcap_file,
+            "jfp": spec_attach_request_sample_json_file,
+            "lfp": spec_attach_request_sample_lists_file,
+        }
+    if message_type == ATTACHREQUEST_MESSAGE_TYPE:
+        excepted_elements = DUT_SPEC_ATTACH_REQUEST_EXCEPTED_ELEMENTS
+    elif UECAPABILITYINFORMATION_MESSAGE_TYPE in message_type:
+        excepted_elements = DUT_UECI_excepted_elements
+    return convert_hex_to_list(hex_data, excepted_elements, message_type, unique_folder_path, temp,
+                               delimiter, file_info), unique_folder_path
+
+def get_delimiter(message_type):
+    if UECAPABILITYINFORMATION_MESSAGE_TYPE in message_type:
+        return UECAPABILITYINFORMATION_DELIMITER
+    elif message_type == ATTACHREQUEST_MESSAGE_TYPE:
+        return ATTACHREQUEST_DELIMITER
+    return None

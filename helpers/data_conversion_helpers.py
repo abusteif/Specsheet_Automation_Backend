@@ -1,8 +1,10 @@
 from subprocess import check_output
 from Specsheet_Automation.static_data.tools_info import text2pcap_path, tshark_path
+from Specsheet_Automation.static_data.configuration import UECAPABILITYINFORMATION_MESSAGE_TYPE, \
+    ATTACHREQUEST_MESSAGE_TYPE
 import json
 
-def convert_raw_hex_to_ws_readable_hex(input_hex, output_hex_file, file_type, start_index):
+def convert_raw_hex_to_ws_readable_hex(input_hex, output_hex_file, start_index, delimiter):
     try:
         def add_zeros(hex_num):
             return "".join(["0"] * (5 - hex_num.__len__())) + hex_num
@@ -10,12 +12,9 @@ def convert_raw_hex_to_ws_readable_hex(input_hex, output_hex_file, file_type, st
         input_hex = input_hex.strip()
         input_hex = "".join(input_hex.split(" "))
         raw_hex_data = []
-        new_index = 0
-        if "UECapabilityInformation" in file_type:
-            new_index = input_hex.find("380", start_index, input_hex.__len__())
-            assert new_index != -1
-            # assert ("38" in input_hex)
-            input_hex = input_hex[new_index:]
+        new_index = input_hex.find(delimiter, start_index, input_hex.__len__())
+        assert new_index != -1
+        input_hex = input_hex[new_index:]
         for i in range(0, input_hex.__len__() - 1, 2):
             raw_hex_data.append(input_hex[i] + input_hex[i + 1])
         with open(output_hex_file, "w") as converted_file:
@@ -38,15 +37,19 @@ def convert_ws_hex_to_pcap(input_hex_file, output_pcap_file):
         return False, "Error while converting HEX to PCAP: {}".format(repr(e))
 
 
-def convert_pcap_to_json(input_pcap_file, output_json_file, file_type="UECapabilityInformation_4G"):
+def convert_pcap_to_json(input_pcap_file, output_json_file, file_type):
     try:
         # dissect = "lte-rrc.ul.dcch" if file_type == "UE Capability Information - 4G" else "nas-eps"
-        dissect = "lte-rrc.ul.dcch" if "UECapabilityInformation" in file_type else "nas-eps"
+        # dissect = "lte-rrc.ul.dcch" if "UECapabilityInformation" in file_type else "nas-eps"
+        if UECAPABILITYINFORMATION_MESSAGE_TYPE in file_type:
+            dissect = "lte-rrc.ul.dcch"
+        elif file_type == ATTACHREQUEST_MESSAGE_TYPE:
+            dissect = "nas-eps"
         json_output = check_output(path_wrapper(tshark_path) + '-o "uat:user_dlts:\\"User 0 (DLT=147)\\",\\"'
                                    + dissect + '\\",\\"0\\",\\"\\",\\"0\\",\\"\\"" -r '
                                    + path_wrapper(input_pcap_file) + ' -T json ')
         assert "Malformed" not in json_output.decode("utf-8")
-        with open(output_json_file, "w") as json_o:
+        with open(output_json_file, "w") as json_o: 
             json_o.write(json_output.decode("utf-8"))
         return True, "Successfully converted PCAP to JSON"
     except AssertionError:
@@ -77,7 +80,7 @@ def convert_json_to_lists_helper(remaining_keys, current_path, all_data, output_
             if current_path:
                 current_path.pop()
 
-def convert_json_to_lists(input_json_file, output_lists_file, excepted_elements):
+def convert_json_to_lists(input_json_file, output_lists_file, excepted_elements, file_type):
     try:
         with open(input_json_file, "r") as input_file:
             lines = json.load(input_file)
@@ -88,15 +91,16 @@ def convert_json_to_lists(input_json_file, output_lists_file, excepted_elements)
         with open(output_lists_file, "r") as complete_output_file:
             complete_lines = complete_output_file.readlines()
             found = False
-            for li in complete_lines:
-                if "CapabilityRAT_ContainerList," in li:
-                    found = True
-                    if li.strip()[-1] == "0":
-                        return False, "Error while converting JSON to LIST"
-                    else:
-                        break
-        if not found:
-            return False, "Error while converting JSON to LIST"
+            if UECAPABILITYINFORMATION_MESSAGE_TYPE in file_type:
+                for li in complete_lines:
+                    if "CapabilityRAT_ContainerList," in li:
+                        found = True
+                        if li.strip()[-1] == "0":
+                            return False, "Error while converting JSON to LIST"
+                        else:
+                            break
+                if not found:
+                    return False, "Error while converting JSON to LIST"
         return True, "successfully converted JSON to LIST"
     except Exception as e:
         return False, "Error while converting JSON to LIST: {}".format(repr(e))

@@ -121,7 +121,7 @@ jira_test_step_order_to_field_mapping = {
 }
 
 
-MSR0835_all_fields = [
+MSR0835_all_UECI_fields = [
     {
         "release": "release_8",
         "path": "accessStratumRelease",
@@ -615,4 +615,19 @@ MSR0835_all_fields = [
         "processor": "rf-Parameters-v1430,ul-256QAM",
         "cell": "E132"
     },
+]
+
+MSR0835_all_attach_request_fields = [
+    {
+        "element": "nas_eps.security_header_type",
+        "values": [None, None, "EPS attach", "combined EPS/IMSI attach", "EPS RLOS attach", None,
+                   "EPS emergency attach"],
+        "cell": "E13"
+    },
+    {
+        "element": "nas_eps.esm_pdn_type",
+        "values": [None, "IPv4", "IPv6", "IPv4v6", None, "none IP", "Ethernet"],
+        "cell": "E14"
+    },
+
 ]

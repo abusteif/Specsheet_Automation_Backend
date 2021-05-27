@@ -2,12 +2,13 @@ from Specsheet_Automation.classes.jira_operations_class import JiraOperations
 import time
 class JiraInteractions:
 
-    def __init__(self, device_name, iot_cycle, project_key, jira_token):
+    def __init__(self, device_name=None, iot_cycle=None, project_key=None, jira_token=None):
         self.jira_operations = JiraOperations(jira_token)
         self.version_id = ""
         self.cycle_id = ""
         self.project_id = ""
-        self.get_device_jira_info(device_name, iot_cycle, project_key)
+        if device_name:
+            self.get_device_jira_info(device_name, iot_cycle, project_key)
 
     def add_steps_to_test_case(self, test_case_key, new_steps_list):
         test_case = self.jira_operations.search_for_test_case(test_case_key)["text"]
@@ -15,11 +16,10 @@ class JiraInteractions:
         all_steps = [step["step"] for step in
                      self.jira_operations.get_test_case_steps(test_case_id)["text"]["stepBeanCollection"]]
 
-        for new_steps in new_steps_list:
-            for data in new_steps:
-                if data not in all_steps:
-                    content = {"step": data}
-                    self.jira_operations.create_step(test_case_id, content)
+        for new_step in new_steps_list:
+            if new_step not in all_steps:
+                content = {"step": new_step}
+                self.jira_operations.create_step(test_case_id, content)
 
     def get_device_jira_info(self, device_name, iot_cycle, project_key):
         self.project_id = self.jira_operations.get_project_id_from_project_key(project_key)["text"]["id"]
