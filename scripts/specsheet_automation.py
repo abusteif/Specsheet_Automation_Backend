@@ -1,7 +1,8 @@
 from Specsheet_Automation.helpers.specsheet_automation_helpers import create_files_folder, \
     extract_data, get_full_path, cleanup_files, upload_results_to_jira, check_if_test_case_executed, \
     get_ie_results_from_jira, get_delimiter
-from Specsheet_Automation.static_data.file_info import lists_file_path
+from Specsheet_Automation.static_data.file_info import lists_file_path, dut_attach_request_lists_file_path, \
+    dut_UECapabilityInformation_lists_file_path
 from Specsheet_Automation.static_data.specsheet_fields import MSR0835_all_UECI_fields
 from Specsheet_Automation.scripts.data_analysis.populate_excel_specsheet import populate_specsheet
 from Specsheet_Automation.static_data.configuration import ATTACHREQUEST_MESSAGE_TYPE, \
@@ -37,9 +38,10 @@ def extract_and_populate_specsheet(hex_data, dut_name, iot_cycle):
             cleanup_files(unique_folder_path)
             return False, converting[0][1]
         if message_type == ATTACHREQUEST_MESSAGE_TYPE:
-            attach_request_lists_file = get_full_path(lists_file_path, unique_folder_path, True)
+            attach_request_lists_file = get_full_path(dut_attach_request_lists_file_path, unique_folder_path, True)
         elif UECAPABILITYINFORMATION_MESSAGE_TYPE in message_type:
-            UECapabilityInfo_lists_file = get_full_path(lists_file_path, unique_folder_path, True)
+            UECapabilityInfo_lists_file = get_full_path(dut_UECapabilityInformation_lists_file_path,
+                                                        unique_folder_path, True)
     MSR0835_full_path = get_full_path("MSR0835_{}_{}.xlsx".format(dut_name, iot_cycle), unique_folder_path, True)
 
     populating = populate_specsheet(MSR0835_full_path, UECapabilityInfo_lists_file=UECapabilityInfo_lists_file,

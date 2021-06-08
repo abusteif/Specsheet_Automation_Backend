@@ -3,8 +3,9 @@ from Specsheet_Automation.classes.Spec_UECI_Info_Extraction import convert_raw_h
 from Specsheet_Automation.classes.DUT_Spec_UECI_Info_Extraction import DUT_UECI_Info_Extraction
 from Specsheet_Automation.classes.jira_interactions import JiraInteractions
 from Specsheet_Automation.static_data.file_info import spec_UECI_categories_file, spec_UECI_warning_list_file, \
-    temp_files_folder, converted_hex_file_path, pcap_file_path, perm_files_folder, lists_file_path, json_file_path, \
-    spec_attach_request_sample_lists_file, spec_attach_request_sample_json_file, spec_attach_request_sample_pcap_file, \
+    temp_files_folder, converted_hex_file_path, pcap_file_path, perm_files_folder, dut_attach_request_lists_file_path, \
+    json_file_path, dut_UECapabilityInformation_lists_file_path, spec_attach_request_sample_lists_file, \
+    spec_attach_request_sample_json_file, spec_attach_request_sample_pcap_file, \
     spec_attach_request_sample_converted_hex_file
 from Specsheet_Automation.static_data.specsheet_fields import MSR0835_all_UECI_fields
 from Specsheet_Automation.classes.data_analysis import DataAnalysis
@@ -23,16 +24,16 @@ def convert_hex_to_list(hex_data, excepted_elements_list, file_type, folder_path
     try:
         print("Converting Hex to lists")
         start_index = 0
-        if file_info:
-            chfp = file_info["chfp"]
-            pfp = file_info["pfp"]
-            jfp = file_info["jfp"]
-            lfp = file_info["lfp"]
-        else:
-            chfp = converted_hex_file_path
-            pfp = pcap_file_path
-            jfp = json_file_path
-            lfp = lists_file_path
+        # if file_info:
+        chfp = file_info["chfp"]
+        pfp = file_info["pfp"]
+        jfp = file_info["jfp"]
+        lfp = file_info["lfp"]
+        # else:
+        #     chfp = converted_hex_file_path
+        #     pfp = pcap_file_path
+        #     jfp = json_file_path
+        #     lfp = lists_file_path
 
         while 1:
             hex_file = get_full_path(chfp, folder_path, temp)
@@ -153,8 +154,12 @@ def create_files_folder(name):
     try:
         os.mkdir(unique_folder_path)
         return True, unique_folder_path
+    except WindowsError as e:
+        if e.winerror == 183:
+            return True, unique_folder_path
+        else:
+            return False, "Error while creating a folder: {}".format(repr(e))
     except Exception as e:
-
         return False, "Error while creating a folder: {}".format(repr(e))
 
 def extract_data(hex_data, message_type, delimiter, temp=True, unique_id=None):
@@ -165,17 +170,27 @@ def extract_data(hex_data, message_type, delimiter, temp=True, unique_id=None):
     if not unique_folder_path[0]:
         return [unique_folder_path[0], unique_folder_path[1]], None
     unique_folder_path = unique_folder_path[1]
-    if not temp and message_type == ATTACHREQUEST_MESSAGE_TYPE:
-        file_info = {
-            "chfp": spec_attach_request_sample_converted_hex_file,
-            "pfp": spec_attach_request_sample_pcap_file,
-            "jfp": spec_attach_request_sample_json_file,
-            "lfp": spec_attach_request_sample_lists_file,
-        }
+    file_info = {
+        "chfp": converted_hex_file_path,
+        "pfp": pcap_file_path,
+        "jfp": json_file_path,
+        "lfp": None
+    }
     if message_type == ATTACHREQUEST_MESSAGE_TYPE:
         excepted_elements = DUT_SPEC_ATTACH_REQUEST_EXCEPTED_ELEMENTS
+        if temp:
+            file_info["lfp"] = dut_attach_request_lists_file_path
+        else:
+            file_info = {
+                "chfp": spec_attach_request_sample_converted_hex_file,
+                "pfp": spec_attach_request_sample_pcap_file,
+                "jfp": spec_attach_request_sample_json_file,
+                "lfp": spec_attach_request_sample_lists_file,
+            }
     elif UECAPABILITYINFORMATION_MESSAGE_TYPE in message_type:
         excepted_elements = DUT_UECI_excepted_elements
+        file_info["lfp"] = dut_UECapabilityInformation_lists_file_path
+
     return convert_hex_to_list(hex_data, excepted_elements, message_type, unique_folder_path, temp,
                                delimiter, file_info), unique_folder_path
 

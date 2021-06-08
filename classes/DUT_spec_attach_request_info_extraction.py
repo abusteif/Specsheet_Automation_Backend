@@ -9,6 +9,7 @@ class DUTSpecAttachRequestInfoExtraction:
     def __init__(self, lists_file):
         self.lists_file = lists_file
         self.trimmed_data = []
+        self.trim_data()
 
     # def extract_data(self):
     #     extracting = extract_data(self.hex_data, ATTACHREQUEST_MESSAGE_TYPE, ATTACHREQUEST_DELIMITER, temp=self.is_dut)

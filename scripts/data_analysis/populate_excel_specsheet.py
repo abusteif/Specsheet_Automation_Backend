@@ -5,7 +5,7 @@ from Specsheet_Automation.classes.DUT_Spec_UECI_Info_Extraction import DUT_UECI_
 from Specsheet_Automation.static_data.file_info import spec_UECI_categories_file, spec_UECI_warning_list_file, \
     MSR0835_template_file
 from Specsheet_Automation.classes.DUT_spec_attach_request_info_extraction import DUTSpecAttachRequestInfoExtraction
-from Specsheet_Automation.static_data.specsheet_fields import MSR0835_all_UECI_fields
+from Specsheet_Automation.static_data.specsheet_fields import MSR0835_all_UECI_fields, MSR0835_all_attach_request_fields
 from Specsheet_Automation.classes.data_analysis import DataAnalysis
 
 def populate_specsheet(MSR0835_full_path, UECapabilityInfo_lists_file=None, attach_request_lists_file=None):
@@ -14,7 +14,7 @@ def populate_specsheet(MSR0835_full_path, UECapabilityInfo_lists_file=None, atta
         full_path = MSR0835_full_path
         copyfile(MSR0835_template_file, full_path)
         workbook = load_workbook(filename=full_path)
-        UECapability_sheet = workbook["UE EUTRA Cap-SpecSheet"]
+        elements_sheet = workbook["UE EUTRA Cap-SpecSheet"]
         band_combinations_sheet = workbook["Band Combinations"]
 
         if UECapabilityInfo_lists_file:
@@ -39,7 +39,7 @@ def populate_specsheet(MSR0835_full_path, UECapabilityInfo_lists_file=None, atta
                     if "postProcessor" in list(ie.keys()):
 
                         result = ie["postProcessor"](result)
-                    UECapability_sheet[ie["cell"]] = result
+                    elements_sheet[ie["cell"]] = result
                 else:
                     result = spec_sheet.find_ie(ie["path"], ie["release"])
                     if not result:
@@ -60,17 +60,28 @@ def populate_specsheet(MSR0835_full_path, UECapabilityInfo_lists_file=None, atta
                             full_result = "{}\n{},".format(full_result, result)
                     else:
                         if full_result.__len__() > 0:
-                            UECapability_sheet[old_cell] = full_result[:-1]
-                            UECapability_sheet[ie["cell"]] = result
+                            elements_sheet[old_cell] = full_result[:-1]
+                            elements_sheet[ie["cell"]] = result
                             old_cell = ie["cell"]
                             full_result = ""
                         else:
-                            UECapability_sheet[ie["cell"]] = result
+                            elements_sheet[ie["cell"]] = result
                             old_cell = ie["cell"]
                             old_result = result
-            workbook.save(filename=full_path)
         if attach_request_lists_file:
-            attach_request_data = 1
+            attach_request = DUTSpecAttachRequestInfoExtraction(attach_request_lists_file)
+            for ie in MSR0835_all_attach_request_fields:
+                result = attach_request.find_ie(ie["element"])
+                if not result:
+                    try:
+                        result = ie["default"]
+                        elements_sheet[ie["cell"]] = result
+                    except KeyError as e:
+                        return False, "Mandatory Attach Request element not found: {}".format(ie)
+                else:
+                    elements_sheet[ie["cell"]] = ie["values"][int(result)]
+        workbook.save(filename=full_path)
+
     except Exception as e:
         return False, "Error while populating Specsheet: {}".format(repr(e))
     return True, "Successfully populated Specsheet"

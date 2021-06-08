@@ -28,7 +28,6 @@ def extract_spec_attach_request(sample_hex_file_input):
         lists_file = get_full_path(spec_attach_request_sample_lists_file, extracting[1], False)
 
     attach = DUTSpecAttachRequestInfoExtraction(lists_file)
-    attach.trim_data()
     step_list = attach.create_spec_ie()
     # jira_token = JiraOperations().get_cookies().get_dict()["crowd.token_key"]
     # jira_interactions = JiraInteractions(project_key=MAIN_JIRA_WDA_PROJECT_KEY, jira_token=jira_token)

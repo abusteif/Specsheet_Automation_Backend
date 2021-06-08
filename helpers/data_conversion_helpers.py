@@ -49,6 +49,7 @@ def convert_pcap_to_json(input_pcap_file, output_json_file, file_type):
                                    + dissect + '\\",\\"0\\",\\"\\",\\"0\\",\\"\\"" -r '
                                    + path_wrapper(input_pcap_file) + ' -T json ')
         assert "Malformed" not in json_output.decode("utf-8")
+        assert "Unknown Message Type" not in json_output.decode("utf-8")
         with open(output_json_file, "w") as json_o: 
             json_o.write(json_output.decode("utf-8"))
         return True, "Successfully converted PCAP to JSON"
@@ -101,6 +102,8 @@ def convert_json_to_lists(input_json_file, output_lists_file, excepted_elements,
                             break
                 if not found:
                     return False, "Error while converting JSON to LIST"
+            # elif file_type == ATTACHREQUEST_MESSAGE_TYPE:
+
         return True, "successfully converted JSON to LIST"
     except Exception as e:
         return False, "Error while converting JSON to LIST: {}".format(repr(e))
