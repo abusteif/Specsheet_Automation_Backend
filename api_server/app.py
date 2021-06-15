@@ -53,7 +53,6 @@ class PopulateSpecsheet(Resource):
 class UploadToJira(Resource):
 
     def post(self):
-        return "ok", 201
         data = request.get_json()
         dut_name = data["device"]
         iot_cycle = data["iotCycle"]
