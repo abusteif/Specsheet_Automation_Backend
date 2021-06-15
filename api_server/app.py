@@ -13,6 +13,7 @@ app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*", "credentials": True}})
 app.config['PROPAGATE_EXCEPTIONS'] = True
 api = Api(app)
+
 class GenerateCookies(Resource):
     def get(self):
         for _ in range(MAX_RETRY_COUNT):

@@ -38,6 +38,18 @@ jira_test_step_order_to_field_mapping = {
     "release_9a0,tdd-Add-UE-EUTRA-Capabilities-r9,phyLayerParameters-r9,ue-SpecificRefSigsSupported": 33,
     "release_9a0,tdd-Add-UE-EUTRA-Capabilities-r9,featureGroupIndicators-r9": 34,
     "release_9a0,tdd-Add-UE-EUTRA-Capabilities-r9,featureGroupIndRel9Add-r9": 35,
+    "release_920,phyLayerParameters-v920,enhancedDualLayerFDD-r9": 79,
+    "release_920,phyLayerParameters-v920,enhancedDualLayerTDD-r9": 80,
+    "release_920,interRAT-ParametersGERAN-v920,dtm-r9": 81,
+    "release_920,interRAT-ParametersGERAN-v920,e-RedirectionGERAN-r9": 82,
+    "release_920,interRAT-ParametersUTRA-v920,e-RedirectionUTRA-r9": 83,
+    "release_920,csg-ProximityIndicationParameters-r9,intraFreqProximityIndication-r9": 87,
+    "release_920,csg-ProximityIndicationParameters-r9,interFreqProximityIndication-r9": 88,
+    "release_920,csg-ProximityIndicationParameters-r9,utran-ProximityIndication-r9": 89,
+    "release_920,neighCellSI-AcquisitionParameters-r9,intraFreqSI-AcquisitionForHO-r9": 90,
+    "release_920,neighCellSI-AcquisitionParameters-r9,interFreqSI-AcquisitionForHO-r9": 91,
+    "release_920,neighCellSI-AcquisitionParameters-r9,utran-SI-AcquisitionForHO-r9": 92,
+    "release_920,son-Parameters-r9,rach-Report-r9": 93,
     "release_1020,ue-Category-v1020": 94,
     "release_1020,featureGroupIndRel10-r10": 101,
     "release_1020,ue-BasedNetwPerfMeasParameters-r10,loggedMeasurementsIdle-r10": 103,
@@ -268,84 +280,84 @@ MSR0835_all_UECI_fields = [
     },
     {
         "release": "release_920",
-        "path": "enhancedDualLayerFDD-r9",
+        "path": ["phyLayerParameters-v920", "enhancedDualLayerFDD-r9"],
         "cell": "E56",
         "values": ["Supported", "Not Supported"],
         "default": "No Information"
     },
     {
         "release": "release_920",
-        "path": "enhancedDualLayerTDD-r9",
+        "path": ["phyLayerParameters-v920", "enhancedDualLayerTDD-r9"],
         "cell": "E57",
         "values": ["Supported", "Not Supported"],
         "default": "No Information"
     },
     {
         "release": "release_920",
-        "path": "dtm-r9",
+        "path": ["interRAT-ParametersGERAN-v920", "dtm-r9"],
         "cell": "E59",
         "values": ["Supported", "Not Supported"],
         "default": "No Information"
     },
     {
         "release": "release_920",
-        "path": "e-RedirectionGERAN-r9",
+        "path": ["interRAT-ParametersGERAN-v920", "e-RedirectionGERAN-r9"],
         "cell": "E60",
         "values": ["Supported", "Not Supported"],
         "default": "No Information"
     },
     {
         "release": "release_920",
-        "path": "e-RedirectionUTRA-r9",
+        "path": ["interRAT-ParametersUTRA-v920", "e-RedirectionUTRA-r9"],
         "cell": "E62",
         "values": ["Supported", "Not Supported"],
         "default": "No Information"
     },
     {
         "release": "release_920",
-        "path": "intraFreqProximityIndication-r9",
+        "path": ["csg-ProximityIndicationParameters-r9", "intraFreqProximityIndication-r9"],
         "cell": "E64",
         "values": ["Supported", "Not Supported"],
         "default": "No Information"
     },
     {
         "release": "release_920",
-        "path": "interFreqProximityIndication-r9",
+        "path": ["csg-ProximityIndicationParameters-r9", "interFreqProximityIndication-r9"],
         "cell": "E65",
         "values": ["Supported", "Not Supported"],
         "default": "No Information"
     },
     {
         "release": "release_920",
-        "path": "utran-ProximityIndication-r9",
+        "path": ["csg-ProximityIndicationParameters-r9", "utran-ProximityIndication-r9"],
         "cell": "E66",
         "values": ["Supported", "Not Supported"],
         "default": "No Information"
     },
     {
         "release": "release_920",
-        "path": "intraFreqSI-AcquisitionForHO-r9",
+        "path": ["neighCellSI-AcquisitionParameters-r9", "intraFreqSI-AcquisitionForHO-r9"],
         "cell": "E68",
         "values": ["Supported", "Not Supported"],
         "default": "No Information"
     },
     {
         "release": "release_920",
-        "path": "interFreqSI-AcquisitionForHO-r9",
+        "path": ["neighCellSI-AcquisitionParameters-r9", "interFreqSI-AcquisitionForHO-r9"],
         "cell": "E69",
         "values": ["Supported", "Not Supported"],
         "default": "No Information"
     },
     {
         "release": "release_920",
-        "path": "utran-SI-AcquisitionForHO-r9",
+        "path": ["neighCellSI-AcquisitionParameters-r9", "utran-SI-AcquisitionForHO-r9"],
         "cell": "E70",
         "values": ["Supported", "Not Supported"],
         "default": "No Information"
     },
     {
         "release": "release_920",
-        "path": "rach-Report-r9",
+        "path": ["son-Parameters-r9", "rach-Report-r9"],
         "cell": "E72",
         "values": ["Supported", "Not Supported"],
         "default": "No Information"
@@ -596,11 +608,11 @@ MSR0835_all_UECI_fields = [
         "default": "No Information",
     },
     {
-        "release": "release_1460",
-        "path": "ue-CategoryDL-v1460",
+        "release": "release_1450",
+        "path": "ue-CategoryDL-v1450",
         "cell": "E130",
         "values": [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
-                   None, None, None, None, "Cat21"],
+                   None, None, None, "Cat20"],
         "default": "No Information",
     },
     {
