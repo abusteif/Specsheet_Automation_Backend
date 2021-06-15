@@ -75,10 +75,13 @@ class JiraInteractions:
                     break
                 for test_step in jira_test_steps:
                     if test_step["step"] in results:
-                        if not self.jira_operations.update_step_result_by_id(str(test_step["id"]),
+                        if "errorId" in self.jira_operations.update_step_result_by_id(str(test_step["id"]),
                                                                       {"comment": results[test_step["step"]],
-                                                                       "status": "1"})["status"]:
-                            print(test_step)
+                                                                       "status": "1"})["text"]:
+                            print("********************************************")
+                        print(self.jira_operations.update_step_result_by_id(str(test_step["id"]),
+                                                                       {"comment": results[test_step["step"]],
+                                                                        "status": "1"})["text"])
                 offset += 500
         except Exception as e:
             print("The following error was encountered while updating test results: {}\nPlease retry later."
