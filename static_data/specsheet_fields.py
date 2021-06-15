@@ -608,11 +608,11 @@ MSR0835_all_fields = [
         "default": "No Information",
     },
     {
-        "release": "release_1460",
-        "path": "ue-CategoryDL-v1460",
+        "release": "release_1450",
+        "path": "ue-CategoryDL-v1450",
         "cell": "E130",
         "values": [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
-                   None, None, None, None, "Cat21"],
+                   None, None, None, "Cat20"],
         "default": "No Information",
     },
     {

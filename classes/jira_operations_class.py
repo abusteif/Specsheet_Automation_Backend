@@ -5,7 +5,7 @@ from Specsheet_Automation.static_data.configuration import *
 import time
 
 JIRA_AUTH = (JIRA_USERNAME, JIRA_PASSWORD)
-TIMEOUT = 10
+TIMEOUT = 5
 def wrap_api_result(result):
     return {
         "text": result.json(),
@@ -99,7 +99,7 @@ class JiraOperations:
 
         for retry in range(MAX_RETRY_COUNT):
             try:
-                return wrap_api_result(requests.get(url, cookies=self.cookies))
+                return wrap_api_result(requests.get(url, cookies=self.cookies, timeout=20))
 
                 # return wrap_api_result(self.session.get(url))
             except Exception as e:
@@ -116,7 +116,8 @@ class JiraOperations:
 
         for retry in range(MAX_RETRY_COUNT):
             try:
-                return wrap_api_result(requests.put(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
+                return wrap_api_result(requests.put(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies,
+                                                    timeout=TIMEOUT))
 
             except Exception as e:
                 print("error while uploading test result: {} {}".format(step_id, new_content))

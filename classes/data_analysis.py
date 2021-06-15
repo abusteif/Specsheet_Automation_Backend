@@ -438,4 +438,4 @@ class DataAnalysis:
                     return "Not Supported"
             return "Supported"
         except KeyError:
-            return "No Information"
+            return "Not Supported"
