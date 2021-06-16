@@ -56,7 +56,18 @@ class DataAnalysis:
         self.multipleTimingAdvance_r11 = None
 
     def supportedBandListEUTRA(self):
-        return self.list_items["release_8,rf-Parameters,supportedBandListEUTRA,SupportedBandEUTRA,bandEUTRA"]
+        raw_list = self.list_items["release_8,rf-Parameters,supportedBandListEUTRA,SupportedBandEUTRA,bandEUTRA"]
+        for index, i in enumerate(raw_list):
+            if i == "64":
+                raw_list = raw_list[:index]
+                break
+
+        try:
+            extra_bands = self.list_items["release_9e0,rf-Parameters-v9e0,supportedBandListEUTRA-v9e0," \
+                                          "SupportedBandEUTRA-v9e0,bandEUTRA-v9e0"]
+            return raw_list + extra_bands
+        except KeyError:
+            return self.list_items["release_8,rf-Parameters,supportedBandListEUTRA,SupportedBandEUTRA,bandEUTRA"]
 
     def release_8_interFreqNeedForGaps(self):
         try:
