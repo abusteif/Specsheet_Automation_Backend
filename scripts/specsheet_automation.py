@@ -1,21 +1,20 @@
-from Specsheet_Automation.helpers.specsheet_automation_helpers import create_files_folder, \
+from Specsheet_Automation.helpers.specsheet_automation_helpers import get_delimiter, \
     extract_data, get_full_path, cleanup_files, upload_results_to_jira, check_if_test_case_executed, \
-    get_ie_results_from_jira, get_delimiter
-from Specsheet_Automation.static_data.file_info import lists_file_path, dut_attach_request_lists_file_path, \
+    get_ie_results_from_jira
+from Specsheet_Automation.static_data.file_info import dut_attach_request_lists_file_path, \
     dut_UECapabilityInformation_lists_file_path
 from Specsheet_Automation.static_data.specsheet_fields import MSR0835_all_UECI_fields
 from Specsheet_Automation.scripts.data_analysis.populate_excel_specsheet import populate_specsheet
 from Specsheet_Automation.static_data.configuration import ATTACHREQUEST_MESSAGE_TYPE, \
     UECAPABILITYINFORMATION_MESSAGE_TYPE
 from uuid import uuid4
-import os
 
 def extract_and_upload(hex_data, message_type, sim_type, dut_name, iot_cycle, jira_token):
 
     delimiter = get_delimiter(message_type)
     converting = extract_data(hex_data, message_type, delimiter)
     unique_folder_path = converting[1]
-    lists_file = get_full_path(lists_file_path, unique_folder_path, True)
+    lists_file = get_full_path(dut_UECapabilityInformation_lists_file_path, unique_folder_path, True)
 
     if not converting[0][0]:
         cleanup_files(unique_folder_path)

@@ -24,16 +24,10 @@ def convert_hex_to_list(hex_data, excepted_elements_list, file_type, folder_path
     try:
         print("Converting Hex to lists")
         start_index = 0
-        # if file_info:
         chfp = file_info["chfp"]
         pfp = file_info["pfp"]
         jfp = file_info["jfp"]
         lfp = file_info["lfp"]
-        # else:
-        #     chfp = converted_hex_file_path
-        #     pfp = pcap_file_path
-        #     jfp = json_file_path
-        #     lfp = lists_file_path
 
         while 1:
             hex_file = get_full_path(chfp, folder_path, temp)
