@@ -188,6 +188,33 @@ def extract_data(hex_data, message_type, delimiter, temp=True, unique_id=None):
     return convert_hex_to_list(hex_data, excepted_elements, message_type, unique_folder_path, temp,
                                delimiter, file_info), unique_folder_path
 
+def extract_data_from_multiple_messages(hex_data):
+    unique_id = str(uuid4())
+    UECapabilityInfo_lists_file = None
+    attach_request_lists_file = None
+    unique_folder_path = None
+    for message_type in hex_data:
+        delimiter = get_delimiter(message_type)
+        converting = extract_data(hex_data[message_type], message_type, delimiter, unique_id=unique_id)
+        unique_folder_path = converting[1]
+        if not converting[0][0]:
+            cleanup_files(unique_folder_path)
+            return False, converting[0][1]
+        if message_type == ATTACHREQUEST_MESSAGE_TYPE:
+            attach_request_lists_file = get_full_path(dut_attach_request_lists_file_path, unique_folder_path, True)
+        elif UECAPABILITYINFORMATION_MESSAGE_TYPE in message_type:
+            UECapabilityInfo_lists_file = get_full_path(dut_UECapabilityInformation_lists_file_path,
+                                                        unique_folder_path, True)
+        try:
+            os.remove(get_full_path(json_file_path, unique_folder_path, True))
+            os.remove(get_full_path(pcap_file_path, unique_folder_path, True))
+            os.remove(get_full_path(converted_hex_file_path, unique_folder_path, True))
+        except OSError as e:
+            print(e)
+            return False, "Error while deleting a file: {}".format(repr(e))
+
+    return True, (attach_request_lists_file, UECapabilityInfo_lists_file, unique_folder_path)
+
 def get_delimiter(message_type):
     if UECAPABILITYINFORMATION_MESSAGE_TYPE in message_type:
         return UECAPABILITYINFORMATION_DELIMITER
