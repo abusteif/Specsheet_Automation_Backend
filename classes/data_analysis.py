@@ -364,14 +364,34 @@ class DataAnalysis:
             "dl": [],
             "ul": []
         }
+
+        ul_categories_mapping = {
+            "ue-CategoryUL-v1310": ["n14", "m1"],
+            "ue-CategoryUL-v1350": ["oneBis"],
+            "ue-CategoryUL-v1430": ["n16", "n17", "n18", "n19", "n20", "m2"],
+            "ue-CategoryUL-v1430b": ["n21"]
+        }
+        dl_categories_mapping = {
+            "ue-CategoryDL-v1310": ["n17", "m1"],
+            "ue-CategoryDL-v1350": ["oneBis"],
+            "ue-CategoryDL-v1430": ["m2"],
+        }
         for element in self.list_items:
             if "Category" in element:
                 if isinstance(element, list):
                     element = element[0]
                 if "UL" in element:
-                    categories["ul"].append(self.list_items[element])
+                    if element.split(",")[-1] not in ul_categories_mapping:
+                        categories["ul"].append(self.list_items[element])
+                    else:
+                        categories["ul"].append(ul_categories_mapping[element.split(",")[-1]]
+                                                [int(self.list_items[element])])
                 else:
-                    categories["dl"].append(self.list_items[element])
+                    if element.split(",")[-1] not in dl_categories_mapping:
+                        categories["dl"].append(self.list_items[element])
+                    else:
+                        categories["dl"].append(dl_categories_mapping[element.split(",")[-1]]
+                                                [int(self.list_items[element])])
         return categories
 
     def get_release_class_mimo(self, ul_dl):
