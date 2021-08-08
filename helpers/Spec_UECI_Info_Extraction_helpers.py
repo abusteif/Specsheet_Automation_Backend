@@ -34,7 +34,7 @@ def find_sequence(line_index, lines):
         of_value = handle_of(line_to_check)
         if not start_recording and of_value:
 
-            return {of_value[1]: (of_value[1], check_for_subsequent_exceptions(lines, of_value[1])["list"])}
+            return {of_value[1]: (of_value[1], check_for_subsequent_exceptions(lines, of_value[1] + " ")["list"])}
 
         if "{" in line_to_check:
             if "ENUMERATED" in line_to_check:

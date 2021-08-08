@@ -66,11 +66,12 @@ class Spec_Doc_Info_Extraction:
                 else:
                     regular_releases[release] = []
                 self.releases[release] = find_sequence(line_index, self.spec_plain_text)
-        with open(categories_file, "w") as release_categories:
-            release_categories.write(json.dumps({
-                "regular": regular_releases,
-                "late": late_releases
-            }))
+        # This has to be done manually as late non critical extensions need to be adjusted
+        # with open(categories_file, "w") as release_categories:
+        #     release_categories.write(json.dumps({
+        #         "regular": regular_releases,
+        #         "late": late_releases
+        #     }))
 
     def build_all_releases(self, all_ie_json_file, all_ie_lists_file, categories_file):
         self.build_initial_releases(categories_file)

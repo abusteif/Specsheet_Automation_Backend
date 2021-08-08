@@ -81,10 +81,12 @@ def convert_json_to_lists_helper(remaining_keys, current_path, all_data, output_
             if current_path:
                 current_path.pop()
 
-def convert_json_to_lists(input_json_file, output_lists_file, excepted_elements, file_type):
+def convert_json_to_lists(input_json_file, output_lists_file, excepted_elements, file_type=""):
     try:
         with open(input_json_file, "r") as input_file:
             lines = json.load(input_file)
+            print(lines)
+
             if isinstance(lines, list):
                 lines = lines[0]
             with open(output_lists_file, "w") as output_file:

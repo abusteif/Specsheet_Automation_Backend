@@ -32,7 +32,7 @@ def extract_and_populate_specsheet(hex_data, dut_name, iot_cycle):
     populating = populate_specsheet(MSR0835_full_path, UECapabilityInfo_lists_file=UECapabilityInfo_lists_file,
                                     attach_request_lists_file=attach_request_lists_file)
     if not populating[0]:
-        cleanup_files(unique_folder_path)
+        # cleanup_files(unique_folder_path)
         return False, populating[1]
     return True, unique_folder_path, MSR0835_full_path
 
