@@ -63,7 +63,7 @@ def convert_json_to_lists_helper(remaining_keys, current_path, all_data, output_
     count = 0
     for k in remaining_keys:
         if not remaining_keys[k]:
-            continue
+            remaining_keys[k] = "Null"
         if isinstance(remaining_keys[k], dict):
             current_path.append(k)
             convert_json_to_lists_helper(remaining_keys[k], current_path, all_data, output_file, excepted_elements)
@@ -85,7 +85,6 @@ def convert_json_to_lists(input_json_file, output_lists_file, excepted_elements,
     try:
         with open(input_json_file, "r") as input_file:
             lines = json.load(input_file)
-            print(lines)
 
             if isinstance(lines, list):
                 lines = lines[0]
