@@ -108,11 +108,11 @@ class NRDataAnalysis:
                 "maxNumberMIMO_LayersCB_PUSCH": map_mimo_num_to_value_ul(self.maxNumberMIMO_LayersCB_PUSCH[b_ul_index]),
                 "supportedModulationOrderUL": map_modulation_num_to_value(self.supportedModulationOrderUL[b_ul_index])
             })
-        # for i in nr_featureSetUplinkPerCC:
-        #     print(i)
+        for i in nr_featureSetUplinkPerCC:
+            print(i)
 
         FeatureSetDownlink = []
-        print(get_start_end(self.featureSetListPerDownlinkCC, "<="))
+        # print(get_start_end(self.featureSetListPerDownlinkCC, "<="))
 
         return
     def get_band_combinations(self):

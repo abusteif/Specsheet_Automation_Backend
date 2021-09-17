@@ -23,7 +23,7 @@ def populate_NR_specsheet(ENDC_template_full_path, UECapabilityInfo_lists_file=N
         LTE_data = LTEDutUECIInfoExtraction(UECapabilityInfo_lists_file)
         NR_ie_list = NR_data.ie_list
         NR_ie_non_list = NR_data.ie_non_list
-        # NR_special_ie_list = NR_data.special_ie_list
+        NR_special_ie_list = NR_data.special_ie_list
 
         LTE_ie_list = LTE_data.ie_list
         LTEie_non_list = LTE_data.ie_non_list
@@ -37,8 +37,8 @@ def populate_NR_specsheet(ENDC_template_full_path, UECapabilityInfo_lists_file=N
         full_result = ""
         NR_data_analysis = NRDataAnalysis({**NR_ie_list, **NR_ie_non_list},
                                           {**LTE_ie_list, **LTEie_non_list},
-                                          )
-        # NR_data_analysis.get_band_combinations()
+                                          NR_special_ie_list)
+        NR_data_analysis.get_band_combinations()
         NR_data_analysis.create_feature_set_details()
         data_analysis.get_r11_band_combinations()
         band_combination_data = data_analysis.band_combinations_table()

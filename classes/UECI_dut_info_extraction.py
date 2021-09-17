@@ -135,7 +135,6 @@ class UECIDutInfoExtraction:
                     get_list_items(ie, items)
                     if [release] + items[-1][0] in self.warning_list:
                         full_ie = ",".join([release] + items[-1][0])
-                        # print(full_ie, items[-1][1])
                         if full_ie in list(self.special_ie_list.keys()):
                             self.special_ie_list[full_ie].append(items[-1][1])
                         else:
@@ -147,8 +146,7 @@ class UECIDutInfoExtraction:
                             self.ie_list[full_ie].append(extract_number_from_item(item[1]))
                         else:
                             self.ie_list[full_ie] = [extract_number_from_item(item[1])]
-        # for i in self.special_ie_list:
-        #     print(i, self.special_ie_list[i])
+
     def find_ie(self, ie, selected_release):
 
         for release_type in self.releases:
