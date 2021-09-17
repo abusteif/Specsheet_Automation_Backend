@@ -1,17 +1,19 @@
-from Specsheet_Automation.static_data.configuration import DUT_UECI_item_0_elements
-from Specsheet_Automation.helpers.DUT_SPEC_UECI_Info_Extraction_helpers import extract_number_from_item, \
+from Specsheet_Automation.static_data.configuration import UECI_dut_item_0_and_1_elements, UECI_dut_items_to_remove
+from Specsheet_Automation.helpers.UECI_info_extraction_helpers import extract_number_from_item, \
     get_list_items
 
 import json
-class DUT_UECI_Info_Extraction:
+class UECIDutInfoExtraction:
     def __init__(self, list_file, categories_file, warning_list_file):
-        self.item_0_data = []
+        self.shortened_data = []
         self.trimmed_data = []
         self.releases = {}
         self.non_list_releases = {}
         self.list_releases = {}
         self.ie_non_list = {}
         self.ie_list = {}
+        self.special_ie_list = {}
+        self.lines_to_remove = []
         with open(list_file, "r") as UECI_list_file:
             processed_data = []
             list_data = UECI_list_file.readlines()
@@ -22,27 +24,28 @@ class DUT_UECI_Info_Extraction:
             self.release_categories = json.load(release_categories)
         with open(warning_list_file, "r") as warning_list:
             self.warning_list = json.load(warning_list)["items_to_omit"]
-        self.finalize_data()
 
-    def get_item_0_data(self):
-        item_0_data = []
+    def remove_unnecessary_elements(self):
+        shortened_data = []
         for ie in self.proccessed_data:
             result = True
-            if ie.__len__() >= DUT_UECI_item_0_elements.__len__():
-                for i in range(0, DUT_UECI_item_0_elements.__len__()):
-                    result = result and ie[i] == DUT_UECI_item_0_elements[i]
+            if ie.__len__() >= self.lines_to_remove.__len__():
+                for i in range(0, self.lines_to_remove.__len__()):
+                    result = result and ie[i] == self.lines_to_remove[i]
                 if result:
-                    item_0_data.append(ie)
-        self.item_0_data = item_0_data
+                    shortened_data.append(ie)
+        self.shortened_data = shortened_data
 
     def trim_data(self):
         trimmed_data = []
-        for i0 in self.item_0_data:
+        for i0 in self.shortened_data:
             new_data_without_prefix = []
-            if i0[15:]:
-                for j in i0[14:]:
+            if i0[len(UECI_dut_items_to_remove)+1:]:
+                for j in i0[len(UECI_dut_items_to_remove):]:
                     if "lte-rrc." in j:
                         j = j.split("lte-rrc.")[1]
+                    if "nr-rrc." in j:
+                        j = j.split("nr-rrc.")[1]
                     if "element" in j:
                         j = j.split("_element")[0]
                     new_data_without_prefix.append(j)
@@ -73,7 +76,7 @@ class DUT_UECI_Info_Extraction:
         self.releases = releases
 
     def finalize_data(self):
-        self.get_item_0_data()
+        self.remove_unnecessary_elements()
         self.trim_data()
         self.build_releases()
         all_releases = self.split_data()
@@ -131,6 +134,12 @@ class DUT_UECI_Info_Extraction:
                     items = []
                     get_list_items(ie, items)
                     if [release] + items[-1][0] in self.warning_list:
+                        full_ie = ",".join([release] + items[-1][0])
+                        # print(full_ie, items[-1][1])
+                        if full_ie in list(self.special_ie_list.keys()):
+                            self.special_ie_list[full_ie].append(items[-1][1])
+                        else:
+                            self.special_ie_list[full_ie] = [items[-1][1]]
                         continue
                     for item in items:
                         full_ie = ",".join([release] + item[0])
@@ -138,7 +147,8 @@ class DUT_UECI_Info_Extraction:
                             self.ie_list[full_ie].append(extract_number_from_item(item[1]))
                         else:
                             self.ie_list[full_ie] = [extract_number_from_item(item[1])]
-
+        # for i in self.special_ie_list:
+        #     print(i, self.special_ie_list[i])
     def find_ie(self, ie, selected_release):
 
         for release_type in self.releases:

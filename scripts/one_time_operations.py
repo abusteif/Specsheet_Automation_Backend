@@ -1,5 +1,5 @@
-from Specsheet_Automation.classes.Spec_UECI_Info_Extraction import Spec_Doc_Info_Extraction
-from Specsheet_Automation.classes.NR_Spec_UECI_NR_Info_Extraction import NR_Spec_Info_Extraction
+from Specsheet_Automation.classes.LTE_UECI_spec_info_extraction import LTEUECISpecInfoExtraction
+from Specsheet_Automation.classes.NR_UECI_spec_info_extraction import NRUECISpecInfoExtraction
 from Specsheet_Automation.classes.jira_interactions import JiraInteractions
 from Specsheet_Automation.classes.jira_operations_class import JiraOperations
 from Specsheet_Automation.classes.DUT_spec_attach_request_info_extraction import DUTSpecAttachRequestInfoExtraction
@@ -16,17 +16,23 @@ import time
 
 def extract_spec_UECI(release_word_doc, release_text_file, spec_json_file, spec_lists_file, spec_csv_file,
                       spec_csv_lists_file, warning_list_file, categories_file):
-    s = Spec_Doc_Info_Extraction(release_word_doc, release_text_file)
-    s.extract_info_from_release_word_doc()
-    s.build_all_releases(spec_json_file, spec_lists_file, categories_file)
-    s.save_list_to_csv(spec_csv_file, spec_csv_lists_file)
-    s.create_warning_list(spec_csv_lists_file, warning_list_file)
+    lte = LTEUECISpecInfoExtraction(release_word_doc, release_text_file)
+    # lte.extract_info_from_release_word_doc()
+    lte.build_all_releases(spec_json_file)
+    lte.save_data_to_json(spec_json_file)
+    lte.convert_json_to_list(spec_json_file, spec_lists_file)
+    lte.save_list_to_csv(spec_csv_file, spec_csv_lists_file)
+    # lte.create_warning_list(spec_csv_lists_file, warning_list_file)
 #     TODO: add upload to Jira function
 
 def extract_NR_spec_UECI(release_word_doc, release_text_file, spec_json_file, spec_lists_file, categories_file):
-    nr = NR_Spec_Info_Extraction(release_word_doc, release_text_file)
+    nr = NRUECISpecInfoExtraction(release_word_doc, release_text_file)
     # nr.extract_info_from_release_word_doc()
-    nr.build_all_releases(spec_json_file, spec_lists_file, categories_file)
+    nr.build_all_releases(spec_json_file)
+    nr.make_wireshark_related_adjustments()
+    nr.save_data_to_json(spec_json_file)
+    nr.convert_json_to_list(spec_json_file, spec_lists_file)
+    nr.deal_with_wireshark_issues()
     nr.save_list_to_csv(NR_spec_UECI_csv_file, NR_spec_UECI_csv_lists_file)
     nr.create_warning_list(NR_spec_UECI_csv_lists_file, NR_spec_UECI_warning_list_file)
 

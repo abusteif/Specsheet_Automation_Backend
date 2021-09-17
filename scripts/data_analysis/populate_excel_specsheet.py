@@ -1,12 +1,12 @@
 from openpyxl import load_workbook
 from shutil import copyfile
 from copy import deepcopy
-from Specsheet_Automation.classes.DUT_Spec_UECI_Info_Extraction import DUT_UECI_Info_Extraction
+from Specsheet_Automation.classes.LTE_UECI_dut_info_extraction import LTEDutUECIInfoExtraction
 from Specsheet_Automation.static_data.file_info import spec_UECI_categories_file, spec_UECI_warning_list_file, \
     MSR0835_template_file
 from Specsheet_Automation.classes.DUT_spec_attach_request_info_extraction import DUTSpecAttachRequestInfoExtraction
-from Specsheet_Automation.static_data.specsheet_fields import MSR0835_all_UECI_fields, MSR0835_all_attach_request_fields
-from Specsheet_Automation.classes.data_analysis import DataAnalysis
+from Specsheet_Automation.static_data.LTE_specsheet_fields import MSR0835_all_UECI_fields, MSR0835_all_attach_request_fields
+from Specsheet_Automation.classes.LTE_data_analysis import LTEDataAnalysis
 
 def populate_specsheet(MSR0835_full_path, UECapabilityInfo_lists_file=None, attach_request_lists_file=None):
     try:
@@ -18,15 +18,14 @@ def populate_specsheet(MSR0835_full_path, UECapabilityInfo_lists_file=None, atta
         band_combinations_sheet = workbook["Band Combinations"]
 
         if UECapabilityInfo_lists_file:
-            spec_sheet = DUT_UECI_Info_Extraction(UECapabilityInfo_lists_file, spec_UECI_categories_file,
-                                                  spec_UECI_warning_list_file)
+            spec_sheet = LTEDutUECIInfoExtraction(UECapabilityInfo_lists_file)
             ie_list = spec_sheet.ie_list
             ie_non_list = spec_sheet.ie_non_list
 
             old_cell = ""
             old_result = ""
             full_result = ""
-            data_analysis = DataAnalysis({**ie_list, **ie_non_list})
+            data_analysis = LTEDataAnalysis({**ie_list, **ie_non_list})
             data_analysis.get_r10_band_combinations()
             data_analysis.get_r11_band_combinations()
             band_combination_data = data_analysis.band_combinations_table()

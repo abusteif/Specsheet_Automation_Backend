@@ -1,9 +1,9 @@
 from Specsheet_Automation.helpers.data_analysis_helpers import get_start_end, get_bands, calculate_num_of_carriers, \
-    calculate_num_of_layers
-from Specsheet_Automation.static_data.specsheet_fields import convert_hex_to_binary
+    calculate_num_of_layers, get_length
+from Specsheet_Automation.static_data.LTE_specsheet_fields import convert_hex_to_binary
 from Specsheet_Automation.static_data.configuration import mimo_mapping, class_mapping, string_mimo_mapping
 
-class DataAnalysis:
+class LTEDataAnalysis:
     def __init__(self, ie_list):
         self.list_items = ie_list
         self.processors = {
@@ -63,7 +63,7 @@ class DataAnalysis:
                 break
 
         try:
-            extra_bands = self.list_items["release_9e0,rf-Parameters-v9e0,supportedBandListEUTRA-v9e0," \
+            extra_bands = self.list_items["release_9e0,rf-Parameters-v9e0,supportedBandListEUTRA-v9e0,"
                                           "SupportedBandEUTRA-v9e0,bandEUTRA-v9e0"]
             return raw_list + extra_bands
         except KeyError:
@@ -94,14 +94,15 @@ class DataAnalysis:
 
     def utraFDD(self):
         utraFDD_bands = ["bandI", "bandII", "bandIII", "bandIV", "bandV", "bandVI", "bandVII", "bandVIII", "bandIX",
-                         "bandX", "bandXI", "bandXII", "bandXIII", "bandXIV", "bandXV", "bandXVI", "...", "bandXVII-8a0",
-                         "bandXVIII-8a0", "bandXIX-8a0", "bandXX-8a0", "bandXXI-8a0", "bandXXII-8a0", "bandXXIII-8a0",
-                         "bandXXIV-8a0", "bandXXV-8a0", "bandXXVI-8a0", "bandXXVII-8a0", "bandXXVIII-8a0",
-                         "bandXXIX-8a0", "bandXXX-8a0", "bandXXXI-8a0", "bandXXXII-8a0"]
+                         "bandX", "bandXI", "bandXII", "bandXIII", "bandXIV", "bandXV", "bandXVI", "...",
+                         "bandXVII-8a0", "bandXVIII-8a0", "bandXIX-8a0", "bandXX-8a0", "bandXXI-8a0", "bandXXII-8a0",
+                         "bandXXIII-8a0", "bandXXIV-8a0", "bandXXV-8a0", "bandXXVI-8a0", "bandXXVII-8a0",
+                         "bandXXVIII-8a0", "bandXXIX-8a0", "bandXXX-8a0", "bandXXXI-8a0", "bandXXXII-8a0"]
         try:
             mapped_bands = [utraFDD_bands[int(band)] for band in
                             self.list_items[
-                                "release_8,interRAT-Parameters,utraFDD,supportedBandListUTRA-FDD,SupportedBandUTRA-FDD"]]
+                                "release_8,interRAT-Parameters,utraFDD,supportedBandListUTRA-FDD,"
+                                "SupportedBandUTRA-FDD"]]
         except KeyError:
             return ["UTRAN not supported"]
         return mapped_bands
@@ -241,7 +242,7 @@ class DataAnalysis:
             self.interRAT_BandList_r11 = self.list_items[
                 "release_1180,rf-Parameters-v1180,supportedBandCombinationAdd-r11,BandCombinationParameters-r11,"
                 "bandInfoEUTRA-r11,interRAT-BandList"]
-        except KeyError as e:
+        except KeyError:
             pass
 
         inter_freq_r11 = get_start_end(self.interFreqBandList_r11, "<") if self.interFreqBandList_r11 else None
@@ -250,8 +251,6 @@ class DataAnalysis:
             if self.supportedBandCombinationAdd_r11 else None
         all_band_combinations = []
 
-        def get_length(item):
-            return int(item[1]) - int(item[0]) if item.__len__() > 0 else 0
         start = 0
         if not band_combinations_r11:
             return
@@ -286,7 +285,7 @@ class DataAnalysis:
             all_band_combinations.append({"band_combs": band_combs, "bcs": bcs})
         if self.supportedBandwidthCombinationSet_r11.__len__() > 0:
             all_band_combinations[-1]["bcs"] = self.supportedBandwidthCombinationSet_r11.pop(0)
-        print( self.supportedBandwidthCombinationSet_r11)
+        print(self.supportedBandwidthCombinationSet_r11)
 
         ul_counter = 0
         dl_counter = 0

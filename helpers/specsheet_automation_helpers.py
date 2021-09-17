@@ -1,19 +1,19 @@
-from Specsheet_Automation.classes.Spec_UECI_Info_Extraction import convert_raw_hex_to_ws_readable_hex, \
+from Specsheet_Automation.helpers.data_conversion_helpers import convert_raw_hex_to_ws_readable_hex, \
     convert_ws_hex_to_pcap, convert_pcap_to_json, convert_json_to_lists
-from Specsheet_Automation.classes.DUT_Spec_UECI_Info_Extraction import DUT_UECI_Info_Extraction
+from Specsheet_Automation.classes.LTE_UECI_dut_info_extraction import LTEDutUECIInfoExtraction
 from Specsheet_Automation.classes.jira_interactions import JiraInteractions
 from Specsheet_Automation.static_data.file_info import spec_UECI_categories_file, spec_UECI_warning_list_file, \
     temp_files_folder, converted_hex_file_path, pcap_file_path, perm_files_folder, dut_attach_request_lists_file_path, \
-    json_file_path, dut_UECapabilityInformation_lists_file_path, spec_attach_request_sample_lists_file, \
+    json_file_path, dut_UECI_lists_file, spec_attach_request_sample_lists_file, \
     spec_attach_request_sample_json_file, spec_attach_request_sample_pcap_file, \
-    spec_attach_request_sample_converted_hex_file
-from Specsheet_Automation.static_data.specsheet_fields import MSR0835_all_UECI_fields
-from Specsheet_Automation.classes.data_analysis import DataAnalysis
+    spec_attach_request_sample_converted_hex_file, NR_dut_UECI_lists_file
+from Specsheet_Automation.static_data.LTE_specsheet_fields import MSR0835_all_UECI_fields
+from Specsheet_Automation.classes.LTE_data_analysis import LTEDataAnalysis
 from Specsheet_Automation.static_data.configuration import MAIN_JIRA_WDA_PROJECT_KEY, JIRA_TEST_CASE_KEYS, \
     DUT_UECI_excepted_elements, ATTACHREQUEST_DELIMITER, UECAPABILITYINFORMATION_DELIMITER, \
     ATTACHREQUEST_MESSAGE_TYPE, UECAPABILITYINFORMATION_MESSAGE_TYPE, DUT_SPEC_ATTACH_REQUEST_EXCEPTED_ELEMENTS
 
-from Specsheet_Automation.static_data.specsheet_fields import jira_test_step_order_to_field_mapping
+from Specsheet_Automation.static_data.LTE_specsheet_fields import jira_test_step_order_to_field_mapping
 import os
 import shutil
 from copy import deepcopy
@@ -53,8 +53,7 @@ def upload_results_to_jira(dut_name, iot_cycle, UECapabilityInfo_lists, message_
     try:
         print("Uploading to Jira")
         full_message_type = "{}_{}".format(message_type, sim_type)
-        spec_sheet = DUT_UECI_Info_Extraction(UECapabilityInfo_lists, spec_UECI_categories_file,
-                                              spec_UECI_warning_list_file)
+        spec_sheet = LTEDutUECIInfoExtraction(UECapabilityInfo_lists)
         jira_interactions = JiraInteractions(dut_name, iot_cycle, MAIN_JIRA_WDA_PROJECT_KEY, jira_token)
         edited_list_ie = {}
         for ie in spec_sheet.ie_list:
@@ -83,7 +82,7 @@ def get_ie_results_from_jira(message_type, sim_type, dut_name, iot_cycle, jira_t
         if not jira_test_cases[0]:
             return False, jira_test_cases[1]
         individual_ie = {}
-        data_analysis = DataAnalysis(jira_test_cases[1])
+        data_analysis = LTEDataAnalysis(jira_test_cases[1])
         data_analysis.get_r10_band_combinations()
         data_analysis.get_r11_band_combinations()
         band_combs = data_analysis.band_combinations_list()
@@ -183,7 +182,7 @@ def extract_data(hex_data, message_type, delimiter, temp=True, unique_id=None):
             }
     elif UECAPABILITYINFORMATION_MESSAGE_TYPE in message_type:
         excepted_elements = DUT_UECI_excepted_elements
-        file_info["lfp"] = dut_UECapabilityInformation_lists_file_path
+        file_info["lfp"] = dut_UECI_lists_file if "4G" in message_type else NR_dut_UECI_lists_file
 
     return convert_hex_to_list(hex_data, excepted_elements, message_type, unique_folder_path, temp,
                                delimiter, file_info), unique_folder_path
@@ -191,6 +190,7 @@ def extract_data(hex_data, message_type, delimiter, temp=True, unique_id=None):
 def extract_data_from_multiple_messages(hex_data):
     unique_id = str(uuid4())
     UECapabilityInfo_lists_file = None
+    NR_UECapabilityInfo_lists_file = None
     attach_request_lists_file = None
     unique_folder_path = None
     for message_type in hex_data:
@@ -203,8 +203,10 @@ def extract_data_from_multiple_messages(hex_data):
         if message_type == ATTACHREQUEST_MESSAGE_TYPE:
             attach_request_lists_file = get_full_path(dut_attach_request_lists_file_path, unique_folder_path, True)
         elif UECAPABILITYINFORMATION_MESSAGE_TYPE in message_type:
-            UECapabilityInfo_lists_file = get_full_path(dut_UECapabilityInformation_lists_file_path,
-                                                        unique_folder_path, True)
+            if "4G" in message_type:
+                UECapabilityInfo_lists_file = get_full_path(dut_UECI_lists_file, unique_folder_path, True)
+            elif "5G" in message_type:
+                NR_UECapabilityInfo_lists_file = get_full_path(NR_dut_UECI_lists_file, unique_folder_path, True)
         try:
             os.remove(get_full_path(json_file_path, unique_folder_path, True))
             os.remove(get_full_path(pcap_file_path, unique_folder_path, True))
@@ -213,7 +215,8 @@ def extract_data_from_multiple_messages(hex_data):
             print(e)
             return False, "Error while deleting a file: {}".format(repr(e))
 
-    return True, (attach_request_lists_file, UECapabilityInfo_lists_file, unique_folder_path)
+    return True, (attach_request_lists_file, UECapabilityInfo_lists_file, NR_UECapabilityInfo_lists_file,
+                  unique_folder_path)
 
 def get_delimiter(message_type):
     if UECAPABILITYINFORMATION_MESSAGE_TYPE in message_type:

@@ -1,5 +1,8 @@
 from Specsheet_Automation.static_data.configuration import mimo_mapping, class_mapping
 
+def get_length(item):
+    return int(item[1]) - int(item[0]) if item.__len__() > 0 else 0
+
 def get_start_end(list_to_process, operator="!="):
     start = 0
     result = []
@@ -10,6 +13,8 @@ def get_start_end(list_to_process, operator="!="):
             return item1 != item2
         if op == "<":
             return int(item1) < int(item2)
+        if op == "<=":
+            return int(item1) <= int(item2)
 
     for e_index, e in enumerate(list_to_process):
         if e_index == 0:

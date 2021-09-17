@@ -1,11 +1,11 @@
-import docx2txt
 import csv
 from itertools import zip_longest
-from Specsheet_Automation.helpers.Spec_UECI_Info_Extraction_helpers import *
+from Specsheet_Automation.helpers.UECI_spec_info_extraction_helpers import *
 from Specsheet_Automation.helpers.data_conversion_helpers import *
-from Specsheet_Automation.helpers.DUT_SPEC_UECI_Info_Extraction_helpers import get_data_from_csv
+from Specsheet_Automation.helpers.UECI_info_extraction_helpers import get_data_from_csv
 
-class Spec_Doc_Info_Extraction:
+
+class UECISpecInfoExtraction:
 
     def __init__(self, release_word_doc_path, release_text_file_path):
         self.release_word_doc = release_word_doc_path
@@ -21,19 +21,16 @@ class Spec_Doc_Info_Extraction:
     def build_initial_releases(self, categories_file):
         return
 
-    def build_all_releases(self, all_ie_json_file, all_ie_lists_file, categories_file):
+    def build_all_releases(self, categories_file):
         self.build_initial_releases(categories_file)
         self.releases_full = self.releases.copy()
         for release in self.releases:
             all_releases = get_data_structure(self.releases[release], self.spec_plain_text, {})
             self.releases[release] = all_releases[1]
             self.releases_full[release] = all_releases[0]
-
         self.releases = simplify_last_child(self.releases)
-
         self.releases_full = simplify_last_child_lists(self.releases_full)
-        self.save_data_to_json(all_ie_json_file)
-        self.convert_json_to_list(all_ie_json_file, all_ie_lists_file)
+        # print(self.releases_full)
 
     def save_data_to_json(self, all_ie_json_file):
         with open(all_ie_json_file, "w") as all_ie:
@@ -52,8 +49,8 @@ class Spec_Doc_Info_Extraction:
                 if isinstance(current_value[d], tuple):
                     if current_value[d][1]:
                         found = True
-                        if json_field[:d_num+1] not in columns_list:
-                            columns_list.append(json_field[:d_num+1])
+                        if json_field[:d_num + 1] not in columns_list:
+                            columns_list.append(json_field[:d_num + 1])
                     current_value = current_value[d][0]
                 else:
                     current_value = current_value[d]
@@ -88,7 +85,7 @@ class Spec_Doc_Info_Extraction:
         warning_list = {"items_to_omit": []}
         with open(warning_list_file, "w") as warning_file:
             for c1 in columns:
-                for c2 in columns[columns.index(c1)+1:]:
+                for c2 in columns[columns.index(c1) + 1:]:
                     if set(c1[:c1.index('')]) < set(c2):
                         warning_list["items_to_omit"].append(c1[:c1.index('')])
                         break
