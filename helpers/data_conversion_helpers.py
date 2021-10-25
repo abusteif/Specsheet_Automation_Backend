@@ -4,6 +4,28 @@ from Specsheet_Automation.static_data.configuration import UECAPABILITYINFORMATI
     ATTACHREQUEST_MESSAGE_TYPE
 import json
 
+
+# TODO: add support for data from IRIS. This can be done by:
+# 1 - Extracting the HEX Stream of the entire UECapabilityIndication message
+# 2 - Updating convert_raw_hex_to_ws_readable_hex to always start at the first character regardless of whether it
+# matches the delimiter. This is going to be a single use case to check if the HEX is for an IRIS message
+# 3 - Modifying convert_ws_hex_to_pcap to accept a new argument that will tell it if it's a standard
+# UECapabilityInformation message or a an IRIS UECapabilityIndication.
+# In the case of IRIS message, the command should simply be:
+# check_output(path_wrapper(text2pcap_path) + '-q -l 1 ' + path_wrapper(input_hex_file) + ' ' +
+#              path_wrapper(output_pcap_file))
+# The 1 is for ethernet frame
+# 4 - Modifying convert_pcap_to_json to accept a new argument that wil tell it if it's a standard
+# UECapabilityInformation message or a an IRIS UECapabilityIndication.
+# In the case of IRIS message, the command should simply be:
+#         json_output = check_output(path_wrapper(tshark_path) + ' -r ' + path_wrapper(input_pcap_file) + ' -T json ')
+# 5 - Modifying convert_json_to_lists to check for the presence of keywords such as "slap" to confirm that it's an
+# an IRIS UECapabilityIndication message and read it accordingly.
+# In the case of IRIS message, the function should check that here is no "data" field to confirm that it's a properly
+# formed IRIS UECapabilityIndication message
+# 6 - Modifying the LTE and NR UECI_info_extraction classes to remove extra lines associated with
+# IRIS UECapabilityIndication and extracting the desired message only
+
 def convert_raw_hex_to_ws_readable_hex(input_hex, output_hex_file, start_index, delimiter):
     try:
         def add_zeros(hex_num):

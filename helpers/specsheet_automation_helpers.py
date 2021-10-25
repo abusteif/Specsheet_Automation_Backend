@@ -18,7 +18,7 @@ import os
 import shutil
 from copy import deepcopy
 from uuid import uuid4
-
+import time
 def convert_hex_to_list(hex_data, excepted_elements_list, file_type, folder_path, temp, delimiter, file_info):
 
     try:
@@ -156,7 +156,6 @@ def create_files_folder(name):
         return False, "Error while creating a folder: {}".format(repr(e))
 
 def extract_data(hex_data, message_type, delimiter, temp=True, unique_id=None):
-    file_info = None
     excepted_elements = None
     new_id = unique_id if unique_id else str(uuid4())
     unique_folder_path = create_files_folder(new_id)

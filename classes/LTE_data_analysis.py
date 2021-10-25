@@ -1,10 +1,11 @@
 from Specsheet_Automation.helpers.data_analysis_helpers import get_start_end, get_bands, calculate_num_of_carriers, \
-    calculate_num_of_layers, get_length
+    calculate_num_of_layers, get_length, pop_special_from_ie_list
 from Specsheet_Automation.static_data.LTE_specsheet_fields import convert_hex_to_binary
 from Specsheet_Automation.static_data.configuration import mimo_mapping, class_mapping, string_mimo_mapping
 
 class LTEDataAnalysis:
     def __init__(self, ie_list):
+        pop_special_from_ie_list(ie_list)
         self.list_items = ie_list
         self.processors = {
                 "rf-Parameters,supportedBandListEUTRA": self.supportedBandListEUTRA,

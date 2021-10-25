@@ -56,3 +56,12 @@ def calculate_num_of_layers(carriers_data):
         if carrier["class"] == "1" or carrier["class"] == "2":
             num += 2 * mimo_mapping[int(carrier["mimo"])]
     return num
+
+def pop_special_from_ie_list(ie_list):
+    for ie in ie_list:
+        if isinstance(ie_list[ie], list):
+            ie_list[ie] = [i for i in ie_list[ie] if "special_" not in i]
+
+
+def map_mimo_num_to_value_dl_LTE(num):
+    return ["2", "4", "8"][int(num)]

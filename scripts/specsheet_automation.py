@@ -3,10 +3,8 @@ from Specsheet_Automation.helpers.specsheet_automation_helpers import get_delimi
     get_ie_results_from_jira, extract_data_from_multiple_messages
 from Specsheet_Automation.static_data.file_info import dut_UECI_lists_file, NR_dut_UECI_lists_file
 from Specsheet_Automation.static_data.LTE_specsheet_fields import MSR0835_all_UECI_fields
-from Specsheet_Automation.scripts.data_analysis.populate_excel_specsheet import populate_specsheet
-from Specsheet_Automation.scripts.data_analysis.populate_NR_excel_specsheet import populate_NR_specsheet
-from Specsheet_Automation.static_data.configuration import ATTACHREQUEST_MESSAGE_TYPE, \
-    UECAPABILITYINFORMATION_MESSAGE_TYPE
+from Specsheet_Automation.scripts.data_analysis.populate_NR_LTE_specsheet import populate_NR_LTE_specsheet
+from Specsheet_Automation.static_data.configuration import ATTACHREQUEST_MESSAGE_TYPE
 
 def extract_and_upload(hex_data, message_type, sim_type, dut_name, iot_cycle, jira_token):
 
@@ -34,26 +32,14 @@ def extract_and_populate_specsheet(hex_data, dut_name, iot_cycle):
     attach_request_lists_file, UECapabilityInfo_lists_file, NR_UECapabilityInfo_lists_file, \
         unique_folder_path = extract_result[1]
 
-    specsheet_full_path = None
+    specsheet_full_path = get_full_path("NR_LTE_specsheet_template_{}_{}.xlsx".
+                                        format(dut_name, iot_cycle), unique_folder_path, True)
+    populating = populate_NR_LTE_specsheet(specsheet_full_path,
+                                           UECapabilityInfo_lists_file=UECapabilityInfo_lists_file,
+                                           NR_UECapabilityInfo_lists_file=NR_UECapabilityInfo_lists_file,
+                                           attach_request_lists_file=attach_request_lists_file)
 
-    populating = [False, "Could not extract data"]
-    for message_type in hex_data:
-        if UECAPABILITYINFORMATION_MESSAGE_TYPE in message_type:
-            if "5G" not in message_type:
-                specsheet_full_path = get_full_path("MSR0835_{}_{}.xlsx".
-                                                    format(dut_name, iot_cycle), unique_folder_path, True)
-                populating = populate_specsheet(specsheet_full_path,
-                                                UECapabilityInfo_lists_file=UECapabilityInfo_lists_file,
-                                                attach_request_lists_file=attach_request_lists_file)
-            elif "5G" in message_type:
-                specsheet_full_path = get_full_path("ENDC_Specsheet_{}_{}.xlsx".
-                                                    format(dut_name, iot_cycle), unique_folder_path, True)
-                populating = populate_NR_specsheet(specsheet_full_path,
-                                                   UECapabilityInfo_lists_file=UECapabilityInfo_lists_file,
-                                                   NR_UECapabilityInfo_lists_file=NR_UECapabilityInfo_lists_file,
-                                                   attach_request_lists_file=attach_request_lists_file)
     if not populating[0]:
-        # cleanup_files(unique_folder_path)
         return False, populating[1]
     return True, unique_folder_path, specsheet_full_path
 

@@ -12,7 +12,6 @@ class UECIDutInfoExtraction:
         self.list_releases = {}
         self.ie_non_list = {}
         self.ie_list = {}
-        self.special_ie_list = {}
         self.lines_to_remove = []
         with open(list_file, "r") as UECI_list_file:
             processed_data = []
@@ -135,10 +134,10 @@ class UECIDutInfoExtraction:
                     get_list_items(ie, items)
                     if [release] + items[-1][0] in self.warning_list:
                         full_ie = ",".join([release] + items[-1][0])
-                        if full_ie in list(self.special_ie_list.keys()):
-                            self.special_ie_list[full_ie].append(items[-1][1])
+                        if full_ie in list(self.ie_list.keys()):
+                            self.ie_list[full_ie].append("special_{}".format(str(items[-1][1])))
                         else:
-                            self.special_ie_list[full_ie] = [items[-1][1]]
+                            self.ie_list[full_ie] = ["special_{}".format(str(items[-1][1]))]
                         continue
                     for item in items:
                         full_ie = ",".join([release] + item[0])
@@ -146,7 +145,8 @@ class UECIDutInfoExtraction:
                             self.ie_list[full_ie].append(extract_number_from_item(item[1]))
                         else:
                             self.ie_list[full_ie] = [extract_number_from_item(item[1])]
-
+        # for i in self.ie_list:
+        #     print(i, self.ie_list[i])
     def find_ie(self, ie, selected_release):
 
         for release_type in self.releases:

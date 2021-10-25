@@ -629,7 +629,7 @@ MSR0835_all_UECI_fields = [
     },
 ]
 
-MSR0835_all_attach_request_fields = [
+LTE_attach_request_fields = [
     {
         "element": "nas_eps.emm.eps_att_type",
         "values": [None, "EPS attach", "combined EPS/IMSI attach", "EPS RLOS attach", None, None,
