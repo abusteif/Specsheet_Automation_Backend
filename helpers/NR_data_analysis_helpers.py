@@ -8,7 +8,7 @@ def pop_delimiters_from_ie_list(ie_list, single_item_list=None):
                 if "special_" not in i:
                     ie_list[ie] = [a for a in ie_list[ie] if "special_" not in a]
                     choice_list = False
-                if single_item_list and ie not in single_item_list:
+                if ie not in single_item_list:
                     ie_list[ie] = [a.split("_itemVal_")[0] for a in ie_list[ie]]
             if choice_list:
                 ie_list[ie] = [a.split("special_")[1] for a in ie_list[ie]]

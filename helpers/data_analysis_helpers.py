@@ -57,11 +57,23 @@ def calculate_num_of_layers(carriers_data):
             num += 2 * mimo_mapping[int(carrier["mimo"])]
     return num
 
-def pop_special_from_ie_list(ie_list):
+def pop_special_from_ie_list_LTE(ie_list, single_item_list=None):
     for ie in ie_list:
         if isinstance(ie_list[ie], list):
             ie_list[ie] = [i for i in ie_list[ie] if "special_" not in i]
+            if ie not in single_item_list:
+                ie_list[ie] = [a.split("_itemVal_")[0] for a in ie_list[ie]]
 
+def get_value_from_itemVal(list_of_elements, max_size):
+    converted = []
+    values = [item.split("_itemVal_")[0] for item in list_of_elements]
+    indices = [int(item.split("_itemVal_")[1]) for item in list_of_elements]
+    for i in range(max_size):
+        if i in indices:
+            converted.append(values[indices.index(i)])
+        else:
+            converted.append(None)
+    return converted
 
 def map_mimo_num_to_value_dl_LTE(num):
     return ["2", "4", "8"][int(num)]

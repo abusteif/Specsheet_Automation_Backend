@@ -1,11 +1,16 @@
 from Specsheet_Automation.helpers.data_analysis_helpers import get_start_end, get_bands, calculate_num_of_carriers, \
-    calculate_num_of_layers, get_length, pop_special_from_ie_list
+    calculate_num_of_layers, get_length, pop_special_from_ie_list_LTE, get_value_from_itemVal
 from Specsheet_Automation.static_data.LTE_specsheet_fields import convert_hex_to_binary
 from Specsheet_Automation.static_data.configuration import mimo_mapping, class_mapping, string_mimo_mapping
 
 class LTEDataAnalysis:
     def __init__(self, ie_list):
-        pop_special_from_ie_list(ie_list)
+        single_item_list = [
+            "release_1180,rf-Parameters-v1180,supportedBandCombinationAdd-r11,BandCombinationParameters-r11,"
+            "multipleTimingAdvance-r11"
+        ]
+        pop_special_from_ie_list_LTE(ie_list, single_item_list)
+
         self.list_items = ie_list
         self.processors = {
                 "rf-Parameters,supportedBandListEUTRA": self.supportedBandListEUTRA,
@@ -238,6 +243,7 @@ class LTEDataAnalysis:
                 "release_1180,rf-Parameters-v1180,supportedBandCombinationAdd-r11,BandCombinationParameters-r11,"
                 "multipleTimingAdvance-r11"]
         except KeyError:
+            self.multipleTimingAdvance_r11 = []
             pass
         try:
             self.interRAT_BandList_r11 = self.list_items[
@@ -255,8 +261,14 @@ class LTEDataAnalysis:
         start = 0
         if not band_combinations_r11:
             return
+
         inter_rat_r11 = inter_rat_r11 if inter_rat_r11 else [[]]*band_combinations_r11.__len__()
         inter_freq_r11 = inter_freq_r11 if inter_freq_r11 else [[]]*band_combinations_r11.__len__()
+
+        self.multipleTimingAdvance_r11 = get_value_from_itemVal(self.multipleTimingAdvance_r11,
+                                                                len(band_combinations_r11))
+
+        band_counter = 0
 
         for bc_r11, interf_r11, interr_r11 in zip(band_combinations_r11, inter_freq_r11, inter_rat_r11):
             bcs = "default"
@@ -267,10 +279,7 @@ class LTEDataAnalysis:
             if get_length(band_combs[-1]) == 1 and get_length(band_combs[0]) != 5:
                 start = end - 1
                 band_combs = band_combs[:-1]
-                # This checks if there is uplink CA in which case it assumes the extra number is
-                # multipleTimingAdvance_r11
-                length_check = [True for b in band_combs if get_length(b) == 4]
-                if length_check.__len__() < 2:
+                if not self.multipleTimingAdvance_r11[band_counter]:
                     bcs = self.supportedBandwidthCombinationSet_r11.pop(0)
             elif get_length(band_combs[-1]) == 2:
                 # This assumes that multipleTimingAdvance_r11 and supportedBandwidthCombinationSet_r11 are there
@@ -284,9 +293,9 @@ class LTEDataAnalysis:
             else:
                 start = end
             all_band_combinations.append({"band_combs": band_combs, "bcs": bcs})
+            band_counter += 1
         if self.supportedBandwidthCombinationSet_r11.__len__() > 0:
             all_band_combinations[-1]["bcs"] = self.supportedBandwidthCombinationSet_r11.pop(0)
-        print(self.supportedBandwidthCombinationSet_r11)
 
         ul_counter = 0
         dl_counter = 0
@@ -295,12 +304,10 @@ class LTEDataAnalysis:
 
             for ob in bc["band_combs"]:
                 if (ob[1] - ob[0]) % 2 == 0:
-                    # noinspection PyTypeChecker
                     new_comb["ul"].append({"band": self.bandEUTRA_r11[dl_counter],
                                            "class": self.ca_BandwidthClassUL_r10_r11[ul_counter]})
 
                     ul_counter += 1
-                # noinspection PyTypeChecker
                 new_comb["dl"].append({"band": self.bandEUTRA_r11[dl_counter],
                                        "class": self.ca_BandwidthClassDL_r10_r11[dl_counter],
                                        "mimo": self.supportedMIMO_CapabilityDL_r10_r11[dl_counter]})

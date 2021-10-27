@@ -1,16 +1,17 @@
-from Specsheet_Automation.helpers.data_analysis_helpers import get_start_end, get_length, map_mimo_num_to_value_dl_LTE
+from Specsheet_Automation.helpers.data_analysis_helpers import get_start_end, get_length, map_mimo_num_to_value_dl_LTE, \
+    get_value_from_itemVal
 from Specsheet_Automation.helpers.NR_data_analysis_helpers import map_fr_bw_num_to_value, map_modulation_num_to_value, \
     map_mimo_num_to_value_ul_NR, map_mimo_num_to_value_dl_NR, initiate_feature_set_values, \
     initiate_band_combination_values, pop_delimiters_from_ie_list, get_bands_NR_dl, get_bands_NR_ul, get_bw_NR_dl, \
     get_lte_dl_layers, get_carriers_num, get_NR_modulation_ul, get_NR_modulation_dl, get_bw_NR_ul, \
     get_dss_support_status, map_bw_support_hex_to_value, initiate_NR_band_values, convert_bw_to_excel_ready, \
-    maxNumberConfiguredTCIstatesPerCC_num_to_value, get_value_from_itemVal, maxNumberActiveTCI_PerBWP_num_to_value, \
     pusch_TransCoherence_num_to_value, maxNumberNonGroupBeamReporting_num_to_value, mnrtbsdl_num_to_value, \
     brt_15_num_to_value, brt_30_num_to_value, brt_60_num_to_value, brt_120_num_to_value, \
     maxNumberSSB_CSI_RS_ResourceOneTx_num_to_value, maxNumberCSI_RS_Resource_num_to_value, \
     maxNumberCSI_RS_ResourceTwoTx_num_to_value, supportedCSI_RS_Density_num_to_value, \
     maxNumberAperiodicCSI_RS_Resource_num_to_value, initiate_empty_list, ue_PowerClass_num_to_value, \
-    maxUplinkDutyCycle_PC2_FR1_num_to_value, modes_num_to_value, maxNumberTxPortsPerResource_num_to_value
+    maxUplinkDutyCycle_PC2_FR1_num_to_value, modes_num_to_value, maxNumberTxPortsPerResource_num_to_value, \
+    maxNumberConfiguredTCIstatesPerCC_num_to_value, maxNumberActiveTCI_PerBWP_num_to_value
 
 from copy import deepcopy
 
@@ -70,11 +71,12 @@ class NRDataAnalysis:
             "release_15,rf-Parameters,supportedBandListNR,BandNR,maxUplinkDutyCycle-PC2-FR1",
             "release_15,rf-Parameters,supportedBandListNR,BandNR,powerBoosting-pi2BPSK",
             "release_15,rf-Parameters,supportedBandListNR,BandNR,rateMatchingLTE-CRS",
+            "release_15,featureSets,featureSetsDownlink-v1540,FeatureSetDownlink-v1540,additionalDMRS-DL-Alt",
             "release_1540,ims-Parameters,ims-ParametersFRX-Diff,voiceOverNR"
         ]
 
         pop_delimiters_from_ie_list(NR_ie_list, single_item_list)
-        pop_delimiters_from_ie_list(LTE_ie_list)
+        pop_delimiters_from_ie_list(LTE_ie_list, [])
 
         self.NR_items = NR_ie_list
         self.LTE_items = LTE_ie_list
@@ -516,30 +518,8 @@ class NRDataAnalysis:
 
     def get_dss_support_list(self):
         fs_dl_1540 = get_start_end(self.featureSetsDownlink_v1540)
-        additionalDMRS_DL_Alt_copy = self.additionalDMRS_DL_Alt[:]
-        if self.oneFL_DMRS_TwoAdditionalDMRS_DL and self.twoFL_DMRS_TwoAdditionalDMRS_DL:
-            assert len(self.oneFL_DMRS_TwoAdditionalDMRS_DL) == len(self.twoFL_DMRS_TwoAdditionalDMRS_DL)
-        if not additionalDMRS_DL_Alt_copy:
-            return
-        for fs_index, fs in enumerate(fs_dl_1540):
-            if self.oneFL_DMRS_TwoAdditionalDMRS_DL and self.twoFL_DMRS_TwoAdditionalDMRS_DL:
-                if get_length(fs) == 2:
-                    self.dss_support_list.append(False)
-                elif get_length(fs) == 3:
-                    self.dss_support_list.append(True)
-                    additionalDMRS_DL_Alt_copy.pop(0)
-                else:
-                    assert 0
-                self.oneFL_DMRS_TwoAdditionalDMRS_DL.pop(0)
-                self.twoFL_DMRS_TwoAdditionalDMRS_DL.pop(0)
-            else:
-                if get_length(fs) == 1:
-                    self.dss_support_list.append(True)
-                    additionalDMRS_DL_Alt_copy.pop(0)
-                else:
-                    assert 0
-        assert not self.oneFL_DMRS_TwoAdditionalDMRS_DL and not self.twoFL_DMRS_TwoAdditionalDMRS_DL and \
-            not additionalDMRS_DL_Alt_copy
+        self.dss_support_list = [True if item else False for item in get_value_from_itemVal(
+            self.additionalDMRS_DL_Alt, len(fs_dl_1540))]
 
     def create_feature_set_details_NR(self):
 
@@ -596,7 +576,6 @@ class NRDataAnalysis:
         return
 
     def prepare_band_declared_feature_set(self):
-        # print(self.dss_support_list)
         empty_band_combination = {
                     "lte": {
                         "ul": [],

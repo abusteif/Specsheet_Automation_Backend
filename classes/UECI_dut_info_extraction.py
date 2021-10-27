@@ -126,6 +126,27 @@ class UECIDutInfoExtraction:
                         continue
                     self.ie_non_list[",".join([release] + ie[:-1])] = ie[-1]
 
+    # def get_ie_lists(self):
+    #     for release_type in self.release_categories:
+    #         for release in self.list_releases[release_type]:
+    #             for ie in self.list_releases[release_type][release]:
+    #                 items = []
+    #                 get_list_items(ie, items)
+    #                 if [release] + items[-1][0] in self.warning_list:
+    #                     full_ie = ",".join([release] + items[-1][0])
+    #                     if full_ie in list(self.ie_list.keys()):
+    #                         self.ie_list[full_ie].append("special_{}".format(str(items[-1][1])))
+    #                     else:
+    #                         self.ie_list[full_ie] = ["special_{}".format(str(items[-1][1]))]
+    #                     continue
+    #                 for item in items:
+    #                     full_ie = ",".join([release] + item[0])
+    #                     if full_ie in list(self.ie_list.keys()):
+    #                         self.ie_list[full_ie].append(extract_number_from_item(item[1]))
+    #                     else:
+    #                         self.ie_list[full_ie] = [extract_number_from_item(item[1])]
+    #     # for i in self.ie_list:
+    #     #     print(i, self.ie_list[i])
     def get_ie_lists(self):
         for release_type in self.release_categories:
             for release in self.list_releases[release_type]:
@@ -139,14 +160,18 @@ class UECIDutInfoExtraction:
                         else:
                             self.ie_list[full_ie] = ["special_{}".format(str(items[-1][1]))]
                         continue
-                    for item in items:
+                    for item_index, item in enumerate(items):
                         full_ie = ",".join([release] + item[0])
+                        value = extract_number_from_item(item[1])
+                        if len(items) == 2 and item_index == len(items) - 1:
+                            # print(full_ie)
+                            value = "{}_itemVal_{}".format(value, extract_number_from_item(items[0][1]))
+
                         if full_ie in list(self.ie_list.keys()):
-                            self.ie_list[full_ie].append(extract_number_from_item(item[1]))
+                            self.ie_list[full_ie].append(value)
                         else:
-                            self.ie_list[full_ie] = [extract_number_from_item(item[1])]
-        # for i in self.ie_list:
-        #     print(i, self.ie_list[i])
+                            self.ie_list[full_ie] = [value]
+
     def find_ie(self, ie, selected_release):
 
         for release_type in self.releases:
