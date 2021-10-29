@@ -2,20 +2,29 @@ from flask import Flask, request, send_file, abort
 from flask_restful import Resource, Api
 from flask_cors import CORS
 from waitress import serve
+import logging
 
 from Specsheet_Automation.classes.jira_operations_class import *
 from Specsheet_Automation.helpers.specsheet_automation_helpers import cleanup_files
 import io
 from Specsheet_Automation.scripts.specsheet_automation import extract_and_upload, validate_data, \
     extract_and_populate_specsheet, get_message_fields, get_all_ie_from_jira, check_for_execution
+from Specsheet_Automation.static_data.file_info import logs_file_path
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*", "credentials": True}})
 app.config['PROPAGATE_EXCEPTIONS'] = True
 api = Api(app)
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S',
+    filename=logs_file_path
+)
 
 class GenerateCookies(Resource):
     def get(self):
+        print(request.remote_addr)
         for _ in range(MAX_RETRY_COUNT):
             try:
                 jira_operations = JiraOperations()
