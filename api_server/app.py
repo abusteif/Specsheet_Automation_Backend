@@ -2,14 +2,19 @@ from flask import Flask, request, send_file, abort
 from flask_restful import Resource, Api
 from flask_cors import CORS
 from waitress import serve
+from datetime import datetime
+from json import JSONDecodeError
 import logging
 
 from Specsheet_Automation.classes.jira_operations_class import *
 from Specsheet_Automation.helpers.specsheet_automation_helpers import cleanup_files
 import io
-from Specsheet_Automation.scripts.specsheet_automation import extract_and_upload, validate_data, \
-    extract_and_populate_specsheet, get_message_fields, get_all_ie_from_jira, check_for_execution
-from Specsheet_Automation.static_data.file_info import logs_file_path
+from Specsheet_Automation.scripts.specsheet_automation import  validate_data, \
+    extract_and_populate_specsheet, get_message_fields,  initialise_jira, create_jira_issue
+    # get_all_ie_from_jira, check_for_execution, extract_and_upload
+from Specsheet_Automation.static_data.file_info import logs_file_path, jira_config_file
+from Specsheet_Automation.static_data.jira_config import JIRA_ISSUE_TYPES, CONFIG_REFRESH_INTERVAL
+from Specsheet_Automation.classes.jira_api import JiraApi
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*", "credentials": True}})
@@ -35,6 +40,27 @@ class GenerateCookies(Resource):
         else:
             return "Failed to generate Cookies", 408
 
+# class JiraInitialise(Resource):
+#     def put(self, projectId):
+#         jira_token = request.headers.get("Authorization")
+#         result = initialise_jira(projectId, jira_token)
+#         if result[0]:
+#             return 204, result[1]
+#         else:
+#             return 500, result[1]
+
+class JiraIssue(Resource):
+
+    def post(self):
+        data = request.get_json()
+        project_id = data["Project"]
+        jira_token = request.headers.get("Authorization")
+        initialise_jira(project_id, jira_token)
+        issue_details = data
+        create_jira_issue(issue_details, jira_token)
+
+
+
 class PopulateSpecsheet(Resource):
 
     def post(self):
@@ -59,24 +85,24 @@ class PopulateSpecsheet(Resource):
         else:
             return result[1], 422
 
-class UploadToJira(Resource):
-
-    def post(self):
-        # return "good", 201
-        data = request.get_json()
-        dut_name = data["device"]
-        iot_cycle = data["iotCycle"]
-        hex_data = data["hexData"]
-        message_type = data["messageType"]
-        sim_type = data["simType"]
-
-        jira_token = request.headers.get("Authorization")
-        result = extract_and_upload(hex_data, message_type, sim_type, dut_name, iot_cycle, jira_token)
-
-        if result[0]:
-            return "Successfully uploaded Spec sheet to Jira", 201
-        else:
-            return result[1], 400
+# class UploadToJira(Resource):
+#
+#     def post(self):
+#         # return "good", 201
+#         data = request.get_json()
+#         dut_name = data["device"]
+#         iot_cycle = data["iotCycle"]
+#         hex_data = data["hexData"]
+#         message_type = data["messageType"]
+#         sim_type = data["simType"]
+#
+#         jira_token = request.headers.get("Authorization")
+#         result = extract_and_upload(hex_data, message_type, sim_type, dut_name, iot_cycle, jira_token)
+#
+#         if result[0]:
+#             return "Successfully uploaded Spec sheet to Jira", 201
+#         else:
+#             return result[1], 400
 
 class JiraProject(Resource):
 
@@ -86,7 +112,7 @@ class JiraProject(Resource):
         result = jira_operations.get_project_id_from_project_key(projectKey)
         return result["text"], result["status"]
 
-class Devices(Resource,):
+class Devices(Resource):
 
     def get(self, projectId):
         jira_token = request.headers.get("Authorization")
@@ -129,51 +155,52 @@ class MSRFields(Resource):
     def get(self, messageType):
         return get_message_fields(messageType), 200
 
-class SpecsheetIEFromJira(Resource):
-    def get(self):
-        args = request.args
-        iot_cycle = args["iotCycle"]
-        dut_name = args["device"]
-        message_type = args["messageType"]
-        sim_type = args["simType"]
-        jira_token = request.headers.get("Authorization")
+# class SpecsheetIEFromJira(Resource):
+#     def get(self):
+#         args = request.args
+#         iot_cycle = args["iotCycle"]
+#         dut_name = args["device"]
+#         message_type = args["messageType"]
+#         sim_type = args["simType"]
+#         jira_token = request.headers.get("Authorization")
+#
+#         result = get_all_ie_from_jira(message_type, sim_type, dut_name, iot_cycle, jira_token)
+#
+#         if result[0]:
+#             return result[1], 200
+#         else:
+#             # return abort(500)
+#             if result[1] == 404:
+#                 return "Test case not found", 404
+#             return result[1], 500
 
-        result = get_all_ie_from_jira(message_type, sim_type, dut_name, iot_cycle, jira_token)
-
-        if result[0]:
-            return result[1], 200
-        else:
-            # return abort(500)
-            if result[1] == 404:
-                return "Test case not found", 404
-            return result[1], 500
-
-class ExecutionStatus(Resource):
-    def get(self):
-        args = request.args
-        dut_name = args["device"]
-        iot_cycle = args["iotCycle"]
-        message_type = args["messageType"]
-        sim_type = args["simType"]
-        jira_token = request.headers.get("Authorization")
-
-        status = check_for_execution(message_type, sim_type, dut_name, iot_cycle, jira_token)
-        if status[0]:
-            return status[1], 200
-        else:
-            return status[1], 500
+# class ExecutionStatus(Resource):
+#     def get(self):
+#         args = request.args
+#         dut_name = args["device"]
+#         iot_cycle = args["iotCycle"]
+#         message_type = args["messageType"]
+#         sim_type = args["simType"]
+#         jira_token = request.headers.get("Authorization")
+#
+#         status = check_for_execution(message_type, sim_type, dut_name, iot_cycle, jira_token)
+#         if status[0]:
+#             return status[1], 200
+#         else:
+#             return status[1], 500
 
 
 api.add_resource(GenerateCookies, '/generateCookies')
+api.add_resource(JiraIssue, '/jiraIssue')
 api.add_resource(JiraProject, '/jiraProject/<string:projectKey>')
 api.add_resource(Devices, '/devices/<string:projectId>')
 api.add_resource(IotCycles, '/iotCycles')
 api.add_resource(Validate, '/validate')
 api.add_resource(PopulateSpecsheet, '/populateSpecsheet')
-api.add_resource(UploadToJira, '/uploadToJira')
+# api.add_resource(UploadToJira, '/uploadToJira')
 api.add_resource(MSRFields, '/messageFields/<string:messageType>')
-api.add_resource(SpecsheetIEFromJira, '/specsheetIEFromJira')
-api.add_resource(ExecutionStatus, '/executionStatus')
+# api.add_resource(SpecsheetIEFromJira, '/specsheetIEFromJira')
+# api.add_resource(ExecutionStatus, '/executionStatus')
 
 if __name__ == '__main__':
     if DEV:
