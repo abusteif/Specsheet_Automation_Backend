@@ -72,15 +72,19 @@ class NRDataAnalysis:
             "release_15,rf-Parameters,supportedBandListNR,BandNR,powerBoosting-pi2BPSK",
             "release_15,rf-Parameters,supportedBandListNR,BandNR,rateMatchingLTE-CRS",
             "release_15,featureSets,featureSetsDownlink-v1540,FeatureSetDownlink-v1540,additionalDMRS-DL-Alt",
-            "release_1540,ims-Parameters,ims-ParametersFRX-Diff,voiceOverNR"
+            # "release_1540,ims-Parameters,ims-ParametersFRX-Diff,voiceOverNR"
         ]
 
-        pop_delimiters_from_ie_list(NR_ie_list, single_item_list)
-        pop_delimiters_from_ie_list(LTE_ie_list, [])
+        split_list = [
+            "release_15,rf-Parameters,supportedBandListNR,BandNR,mimo-ParametersPerBand,codebookParameters,type1,"
+            "singlePanel,supportedCSI-RS-ResourceList"
+        ]
+        print(NR_ie_list["release_1540,ims-Parameters,ims-ParametersFRX-Diff,voiceOverNR"])
+        pop_delimiters_from_ie_list(NR_ie_list, single_item_list, split_list)
+        pop_delimiters_from_ie_list(LTE_ie_list, [], [])
 
         self.NR_items = NR_ie_list
         self.LTE_items = LTE_ie_list
-        # self.NR_special_ie_list = NR_special_ie_list
 
         self.processors = {
             "Supported NR Band": self.supportedNRBand,
@@ -379,11 +383,7 @@ class NRDataAnalysis:
                                                         "rateMatchingLTE-CRS"], len(self.all_bands))
         except KeyError:
             pass
-        try:
-            von = get_value_from_itemVal(self.NR_items["release_1540,ims-Parameters,ims-ParametersFRX-Diff,"
-                                                       "voiceOverNR"], len(self.all_bands))
-        except KeyError:
-            pass
+
 
         single_panel_data = self.get_singlePanel_data()
         for band_index, band in enumerate(self.all_bands):
@@ -443,17 +443,8 @@ class NRDataAnalysis:
                 "maxUplinkDutyCycle-PC2-FR1": maxUplinkDutyCycle_PC2_FR1_num_to_value(mudcp2f1[band_index]),
                 "powerBoosting-pi2BPSK": "Supported" if pbp[band_index] else "Not Supported",
                 "rateMatchingLTE-CRS": "Supported" if rmlc[band_index] else "Not Supported",
-                "voiceOverNR": "Supported" if von[band_index] else "Not Supported",
             }
             self.NR_bands.append(band_details)
-        # for i in self.NR_bands:
-        #     print(i["codebookParameters(Type1 singlePanel)->maxNumberTxPortsPerResource"])
-        #     print(i["codebookParameters(Type1 singlePanel)->maxNumberResourcesPerBand"])
-        #     print(i["codebookParameters(Type1 singlePanel)->totalNumberTxPortsPerBand"])
-
-            # print(i["maxNumberSSB-CSI-RS-ResourceOneTx"])
-            # print(i["beamReportTiming->scs-60kHz"])
-            # print(i["beamReportTiming->scs-120kHz"])
 
     def supportedNRBand(self):
         return ",".join(self.all_bands)
@@ -474,23 +465,22 @@ class NRDataAnalysis:
                                                   "mimo-ParametersPerBand,codebookParameters,type1,singlePanel,"
                                                   "supportedCSI-RS-ResourceList,SupportedCSI-RS-Resource,"
                                                   "totalNumberTxPortsPerBand"]
-        supportedCSI_RS_ResourceList = self.NR_items["release_15,rf-Parameters,supportedBandListNR,BandNR,"
-                                                     "mimo-ParametersPerBand,codebookParameters,type1,singlePanel,"
-                                                     "supportedCSI-RS-ResourceList"]
+
         mntppr = []
         mnrpb = []
         tntppb = []
 
-        scrrl = get_start_end(supportedCSI_RS_ResourceList, "<")
-        for s in scrrl:
-            scrrl_per_band = get_start_end(supportedCSI_RS_ResourceList[:get_length(s)])
-            mntppr.append(", ".join([maxNumberTxPortsPerResource_num_to_value(m) for m in
-                                     maxNumberTxPortsPerResource[0:len(scrrl_per_band)]]))
-            mnrpb.append(", ".join(maxNumberResourcesPerBand[0:len(scrrl_per_band)]))
-            tntppb.append(", ".join(totalNumberTxPortsPerBand[0:len(scrrl_per_band)]))
-            maxNumberTxPortsPerResource = maxNumberTxPortsPerResource[len(scrrl_per_band):]
-            maxNumberResourcesPerBand = maxNumberResourcesPerBand[len(scrrl_per_band):]
-            totalNumberTxPortsPerBand = totalNumberTxPortsPerBand[len(scrrl_per_band):]
+        all_resource_list = self.NR_items["release_15,rf-Parameters,supportedBandListNR,BandNR,mimo-ParametersPerBand,"
+                                          "codebookParameters,type1,singlePanel,"
+                                          "supportedCSI-RS-ResourceList"]["secondary"]
+        for r in all_resource_list:
+            mntppr.append(", ".join(maxNumberTxPortsPerResource[0:int(r)]))
+            mnrpb.append(", ".join(maxNumberResourcesPerBand[0:int(r)]))
+            tntppb.append(", ".join(totalNumberTxPortsPerBand[0:int(r)]))
+
+            maxNumberTxPortsPerResource = maxNumberTxPortsPerResource[int(r):]
+            maxNumberResourcesPerBand = maxNumberResourcesPerBand[int(r):]
+            totalNumberTxPortsPerBand = totalNumberTxPortsPerBand[int(r):]
 
         return {
             "mntppr": mntppr,
@@ -662,10 +652,6 @@ class NRDataAnalysis:
                 self.declared_band_combs.append(declared_multi_band_comb)
 
                 self.FeatureSetsPerBand = self.FeatureSetsPerBand[band_comb_len * 2:]
-        # j = 0
-        # for i in self.declared_band_combs:
-        #     print(i)
-        # print(j)
 
         return
 
@@ -751,7 +737,6 @@ class NRDataAnalysis:
 
         offset = 2
         data = dict()
-
         for b_c_index, b_c in enumerate(self.band_combinations):
             data["{}{}".format(band_comb_num, b_c_index + offset)] = b_c_index + 1
             data["{}{}".format(dl_combination, b_c_index + offset)] = get_bands_NR_dl(b_c)

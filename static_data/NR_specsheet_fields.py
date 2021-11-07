@@ -347,6 +347,13 @@ NR_all_UECI_fields = [
         "processor": "supportedBandListNR",
         "cell": "C80",
     },
+    {
+        "release": "release_1540",
+        "path": ["ims-Parameters", "ims-ParametersFRX-Diff", "voiceOverNR"],
+        "cell": "C81",
+        "values": ["Supported", "Not Supported"],
+        "default": "Not Supported"
+    },
 
 ]
 
@@ -392,7 +399,6 @@ NR_band_fields = [
     "maxUplinkDutyCycle-PC2-FR1",
     "powerBoosting-pi2BPSK",
     "rateMatchingLTE-CRS",
-    "voiceOverNR",
 ]
 
 NR_attach_request_fields = [

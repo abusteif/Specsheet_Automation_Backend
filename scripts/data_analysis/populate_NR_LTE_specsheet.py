@@ -162,6 +162,7 @@ def populate_NR_LTE_specsheet(NR_LTE_specsheet_full_path, UECapabilityInfo_lists
                     else:
                         rats[rat]["elements_sheet"][ie["cell"]] = ie["values"][int(result)]
         workbook.save(filename=full_path)
+        assert False
     except Exception as e:
         print(repr(e))
         return False, "Error while populating Specsheet: {}".format(repr(e))

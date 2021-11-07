@@ -31,7 +31,7 @@ def get_start_end(list_to_process, operator="!="):
 def get_bands(bands_data):
     result = ""
     for bd in bands_data:
-        one_band = "{}{}".format(bd["band"], class_mapping[bd["class"]])
+        one_band = "{}{}".format(bd["band"], class_mapping[int(bd["class"])])
         if "mimo" in list(bd.keys()):
             one_band += "({})".format(mimo_mapping[int(bd["mimo"])])
         result += "{}-".format(one_band)
