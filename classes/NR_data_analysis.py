@@ -421,7 +421,7 @@ class NRDataAnalysis:
                 "supportedCSI-RS-Density": supportedCSI_RS_Density_num_to_value(scrd[band_index]),
                 "maxNumberAperiodicCSI-RS-Resource": maxNumberAperiodicCSI_RS_Resource_num_to_value(mnacrr[band_index]),
                 "codebookParameters(Type1 singlePanel)->maxNumberTxPortsPerResource":
-                    single_panel_data["mntppr"][band_index],
+                    (single_panel_data["mntppr"][band_index]),
                 "codebookParameters(Type1 singlePanel)->maxNumberResourcesPerBand":
                     single_panel_data["mnrpb"][band_index],
                 "codebookParameters(Type1 singlePanel)->totalNumberTxPortsPerBand":
@@ -473,7 +473,7 @@ class NRDataAnalysis:
                                           "codebookParameters,type1,singlePanel,"
                                           "supportedCSI-RS-ResourceList"]["secondary"]
         for r in all_resource_list:
-            mntppr.append(", ".join(maxNumberTxPortsPerResource[0:int(r)]))
+            mntppr.append(", ".join([maxNumberTxPortsPerResource_num_to_value(r) for r in maxNumberTxPortsPerResource[0:int(r)]]))
             mnrpb.append(", ".join(maxNumberResourcesPerBand[0:int(r)]))
             tntppb.append(", ".join(totalNumberTxPortsPerBand[0:int(r)]))
 
