@@ -79,7 +79,6 @@ class NRDataAnalysis:
             "release_15,rf-Parameters,supportedBandListNR,BandNR,mimo-ParametersPerBand,codebookParameters,type1,"
             "singlePanel,supportedCSI-RS-ResourceList"
         ]
-        print(NR_ie_list["release_1540,ims-Parameters,ims-ParametersFRX-Diff,voiceOverNR"])
         pop_delimiters_from_ie_list(NR_ie_list, single_item_list, split_list)
         pop_delimiters_from_ie_list(LTE_ie_list, [], [])
 
