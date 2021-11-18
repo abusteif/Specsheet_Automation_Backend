@@ -11,7 +11,7 @@ from Specsheet_Automation.helpers.NR_data_analysis_helpers import map_fr_bw_num_
     maxNumberCSI_RS_ResourceTwoTx_num_to_value, supportedCSI_RS_Density_num_to_value, \
     maxNumberAperiodicCSI_RS_Resource_num_to_value, initiate_empty_list, ue_PowerClass_num_to_value, \
     maxUplinkDutyCycle_PC2_FR1_num_to_value, modes_num_to_value, maxNumberTxPortsPerResource_num_to_value, \
-    maxNumberConfiguredTCIstatesPerCC_num_to_value, maxNumberActiveTCI_PerBWP_num_to_value
+    maxNumberConfiguredTCIstatesPerCC_num_to_value, maxNumberActiveTCI_PerBWP_num_to_value, present_bw
 
 from copy import deepcopy
 
@@ -431,14 +431,14 @@ class NRDataAnalysis:
                 "multipleTCI": "Supported" if mtci[band_index] else "Not Supported",
                 "pusch-256QAM": "Supported" if p256q[band_index] else "Not Supported",
                 "ue-PowerClass": ue_PowerClass_num_to_value(uepc[band_index]),
-                "channelBWsDL->scs-15kHz": bw_dl_fr1_15[band_index],
-                "channelBWsDL->scs-30kHz": bw_dl_fr1_30[band_index],
-                "channelBWsDL->scs-60kHz": bw_dl_fr1_60[band_index],
-                "channelBWsDL->scs-120kHz": bw_dl_fr2_120[band_index],
-                "channelBWsUL->scs-15kHz": bw_ul_fr1_15[band_index],
-                "channelBWsUL->scs-30kHz": bw_ul_fr1_30[band_index],
-                "channelBWsUL->scs-60kHz": bw_ul_fr1_60[band_index],
-                "channelBWsUL->scs-120kHz": bw_ul_fr2_120[band_index],
+                "channelBWsDL->scs-15kHz": present_bw(bw_dl_fr1_15[band_index]),
+                "channelBWsDL->scs-30kHz": present_bw(bw_dl_fr1_30[band_index]),
+                "channelBWsDL->scs-60kHz": present_bw(bw_dl_fr1_60[band_index]),
+                "channelBWsDL->scs-120kHz": present_bw(bw_dl_fr2_120[band_index]),
+                "channelBWsUL->scs-15kHz": present_bw(bw_ul_fr1_15[band_index]),
+                "channelBWsUL->scs-30kHz": present_bw(bw_ul_fr1_30[band_index]),
+                "channelBWsUL->scs-60kHz": present_bw(bw_ul_fr1_60[band_index]),
+                "channelBWsUL->scs-120kHz": present_bw(bw_ul_fr2_120[band_index]),
                 "maxUplinkDutyCycle-PC2-FR1": maxUplinkDutyCycle_PC2_FR1_num_to_value(mudcp2f1[band_index]),
                 "powerBoosting-pi2BPSK": "Supported" if pbp[band_index] else "Not Supported",
                 "rateMatchingLTE-CRS": "Supported" if rmlc[band_index] else "Not Supported",

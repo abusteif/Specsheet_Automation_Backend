@@ -384,3 +384,14 @@ def initiate_empty_list(num_of_var, max_length):
     for i in range(num_of_var):
         result.append([None] * max_length)
     return result
+
+def convert_hex_to_binary(hex_num, min_zeros=32):
+    if not hex_num:
+        return hex_num
+    hex_num = hex_num.replace(":", "")
+    return bin(int(hex_num, 16))[2:].zfill(min_zeros)
+
+def present_bw(bw):
+    if not bw:
+        return None
+    return "{} ({})".format(bw, convert_hex_to_binary(bw, 10)[:10])

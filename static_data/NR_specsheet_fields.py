@@ -9,70 +9,70 @@ NR_all_UECI_fields = [
         "release": "release_15",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0000"],
         "cell": "C32",
-        "values": ["Supported", "Not Supported"],
+        "values": ["Not Supported", "Supported"],
         "default": "No Information"
     },
     {
         "release": "release_15",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0001"],
         "cell": "C33",
-        "values": ["Supported", "Not Supported"],
+        "values": ["Not Supported", "Supported"],
         "default": "No Information"
     },
     {
         "release": "release_15",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0002"],
         "cell": "C34",
-        "values": ["Supported", "Not Supported"],
+        "values": ["Not Supported", "Supported"],
         "default": "No Information"
     },
     {
         "release": "release_15",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0003"],
         "cell": "C35",
-        "values": ["Supported", "Not Supported"],
+        "values": ["Not Supported", "Supported"],
         "default": "No Information"
     },
     {
         "release": "release_15",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0004"],
         "cell": "C36",
-        "values": ["Supported", "Not Supported"],
+        "values": ["Not Supported", "Supported"],
         "default": "No Information"
     },
     {
         "release": "release_15",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0006"],
         "cell": "C37",
-        "values": ["Supported", "Not Supported"],
+        "values": ["Not Supported", "Supported"],
         "default": "No Information"
     },
     {
         "release": "release_15",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0101"],
         "cell": "C38",
-        "values": ["Supported", "Not Supported"],
+        "values": ["Not Supported", "Supported"],
         "default": "No Information"
     },
     {
         "release": "release_15",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0102"],
         "cell": "C39",
-        "values": ["Supported", "Not Supported"],
+        "values": ["Not Supported", "Supported"],
         "default": "No Information"
     },
     {
         "release": "release_15",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0103"],
         "cell": "C40",
-        "values": ["Supported", "Not Supported"],
+        "values": ["Not Supported", "Supported"],
         "default": "No Information"
     },
     {
         "release": "release_15",
         "path": ["pdcp-Parameters", "supportedROHC-Profiles", "profile0x0104"],
         "cell": "C41",
-        "values": ["Supported", "Not Supported"],
+        "values": ["Not Supported", "Supported"],
         "default": "No Information"
     },
     {
@@ -169,7 +169,7 @@ NR_all_UECI_fields = [
     },
     {
         "release": "release_15",
-        "path": ["mac-Parameters", "mac-ParametersXDD-Diff", " multipleConfiguredGrants"],
+        "path": ["mac-Parameters", "mac-ParametersXDD-Diff", "multipleConfiguredGrants"],
         "cell": "C55",
         "values": ["Supported", "Not Supported"],
         "default": "Not Supported"
@@ -295,7 +295,7 @@ NR_all_UECI_fields = [
     },
     {
         "release": "release_15",
-        "path": ["phy-Parameters", "phy-ParametersFRX-Diff", "absoluteTPC-Command"],
+        "path": ["fr1-Add-UE-NR-Capabilities", "phy-ParametersFRX-Diff", "absoluteTPC-Command"],
         "cell": "C73",
         "values": ["Supported", "Not Supported"],
         "default": "Not Supported"
@@ -337,7 +337,7 @@ NR_all_UECI_fields = [
     },
     {
         "release": "release_15",
-        "path": ["phy-Parameters", "phy-ParametersFR1", "rateMatchingResrcSetSemi-Static"],
+        "path": ["phy-Parameters", "phy-ParametersCommon", "rateMatchingResrcSetSemi-Static"],
         "cell": "C79",
         "values": ["Supported", "Not Supported"],
         "default": "Not Supported"
