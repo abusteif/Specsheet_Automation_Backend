@@ -10,7 +10,7 @@ from Specsheet_Automation.classes.jira_operations_class import *
 from Specsheet_Automation.helpers.specsheet_automation_helpers import cleanup_files
 import io
 from Specsheet_Automation.scripts.specsheet_automation import  validate_data, \
-    extract_and_populate_specsheet, get_message_fields,  initialise_jira, create_jira_issue
+    extract_and_populate_specsheet, get_message_fields,  initialise_jira, create_jira_issue, create_defect
     # get_all_ie_from_jira, check_for_execution, extract_and_upload
 from Specsheet_Automation.static_data.file_info import logs_file_path, jira_config_file
 from Specsheet_Automation.static_data.jira_config import JIRA_ISSUE_TYPES, CONFIG_REFRESH_INTERVAL
@@ -57,8 +57,21 @@ class JiraIssue(Resource):
         jira_token = request.headers.get("Authorization")
         initialise_jira(project_id, jira_token)
         issue_details = data
-        create_jira_issue(issue_details, jira_token)
+        response = create_jira_issue(issue_details, jira_token)
+        return response["status"]
 
+class JiraDefect(Resource):
+
+    def post(self):
+        data = request.get_json()
+        try:
+            jira_token = request.headers.get("Authorization")
+        except KeyError:
+            jira_token = None
+        url = data["url"]
+        summary = data["summary"]
+        description = data["description"]
+        return 200, create_defect(url, summary, description, jira_token)
 
 
 class PopulateSpecsheet(Resource):
@@ -192,6 +205,7 @@ class MSRFields(Resource):
 
 api.add_resource(GenerateCookies, '/generateCookies')
 api.add_resource(JiraIssue, '/jiraIssue')
+api.add_resource(JiraDefect, '/jiraDefect')
 api.add_resource(JiraProject, '/jiraProject/<string:projectKey>')
 api.add_resource(Devices, '/devices/<string:projectId>')
 api.add_resource(IotCycles, '/iotCycles')

@@ -14,6 +14,7 @@ from Specsheet_Automation.classes.jira_api import JiraApi
 from datetime import datetime
 import json
 from json import JSONDecodeError
+from urllib.parse import unquote
 
 # def extract_and_upload(hex_data, message_type, sim_type, dut_name, iot_cycle, jira_token):
 #
@@ -83,15 +84,16 @@ def get_message_fields(message_type):
 # def get_all_ie_from_jira(message_type, sim_type, dut_name, iot_cycle, jira_token):
 #     return get_ie_results_from_jira(message_type, sim_type, dut_name, iot_cycle, jira_token)
 
-def initialise_jira(project_id, jira_token):
+def initialise_jira(project_id, jira_token, force_update=False):
     try:
         with open(jira_config_file, "r+") as config_file:
-            try:
-                saved_data = json.load(config_file)
-                if int(datetime.now().timestamp()) - saved_data["lastUpdated"] < CONFIG_REFRESH_INTERVAL:
-                    return True, "Update not due"
-            except JSONDecodeError:
-                pass
+            if not force_update:
+                try:
+                    saved_data = json.load(config_file)
+                    if int(datetime.now().timestamp()) - saved_data["lastUpdated"] < CONFIG_REFRESH_INTERVAL:
+                        return True, "Update not due"
+                except JSONDecodeError:
+                    pass
             config_file.seek(0)
             config_file.truncate()
             jira = JiraApi(jira_token)
@@ -113,8 +115,6 @@ def initialise_jira(project_id, jira_token):
             }
             for issue in issue_types:
                 meta_data = jira.get_meta_data_for_issue_type(project_id, issue_types[issue]["id"])["text"]["values"]
-                # if issue == "Bug":
-                #     print(jira.get_meta_data_for_issue_type(project_id, "1")["text"])
                 for value in meta_data:
                     issue_types[issue]["fields"][value["name"]] = {
                         "id": value["fieldId"],
@@ -135,11 +135,21 @@ def initialise_jira(project_id, jira_token):
 
 def create_jira_issue(issue_details, jira_token):
     jira = JiraApi(jira_token)
+    print("Getting issue field details")
     with open(jira_config_file, "r") as config_file:
         jira_config = json.load(config_file)
     request_data = {}
     issue_type = issue_details["Issue Type"]
     assert sorted(issue_details.keys()) == sorted(JIRA_MANDATORY_FIELDS[issue_type])
+
+    version_id = 0
+    if issue_type == "Story":
+        print("Issue is a Story. Creating the associated Version")
+        version_id = jira.create_version(issue_details["Project"], issue_details["Summary"])["text"]["id"]
+        initialise_jira(issue_details["Project"], jira_token, True)
+        with open(jira_config_file, "r") as config_file:
+            jira_config = json.load(config_file)
+
     for field in issue_details:
         if field == "Project":
             request_data["project"] = {
@@ -148,7 +158,8 @@ def create_jira_issue(issue_details, jira_token):
             }
             continue
         if field == "Affect":
-            request_data["update"] = issue_details[field]["Affect"]
+            print("Linking Story to Epic")
+            request_data["update"] = issue_details["Affect"]
             continue
         if jira_config["issueTypes"][issue_type]["fields"][field]["allowedValues"]:
             value = [v["id"] for v in jira_config["issueTypes"][issue_type]["fields"][field]["allowedValues"]
@@ -160,4 +171,64 @@ def create_jira_issue(issue_details, jira_token):
             "allowedValues": jira_config["issueTypes"][issue_type]["fields"][field]["allowedValues"],
             "value": value
         }
-    print(jira.create_issue(request_data))
+    print("Creating Ticket")
+    response = jira.create_issue(request_data)
+    if response["status"] == 201:
+        if issue_type == "Story":
+            jira.update_version(issue_details["Summary"], response["text"]["key"], version_id)
+
+    return response
+
+def create_version(project_id, name, description, jira_token):
+    jira = JiraApi(jira_token)
+    jira.create_version(project_id, name, description)
+    return
+
+def extract_story_from_url(url):
+    print("Extracting Information from URL")
+    url = unquote(url)
+    project_url = url[url.index("project"):]
+    project = project_url.split(" ")[2].replace('"', "")
+    version_url = url[url.index("fixVersion"):]
+    version = version_url.split("AND")[0].split("=")[1].strip().replace('"', "")
+    print("Project: {}\nSoftware: {}".format(project, version))
+    return project, version
+
+def create_defect(url, summary, description, jira_token):
+    project, version = extract_story_from_url(url)
+    jira = JiraApi(jira_token)
+    project_id = jira.get_project_details(project)["text"]["id"]
+
+    all_versions = jira.get_all_versions(project_id)["text"]
+    version_id = [v["id"] for v in all_versions if v["name"] == version][0]
+    story_key = jira.get_version_details(version_id)["text"]["description"]
+    print("Linked Story: {}".format(story_key))
+    fields_to_retreive = [
+        "Component/s",
+        "Affects Version/s",
+        "Epic Link"
+    ]
+    with open(jira_config_file, "r") as config_file:
+        jira_config = json.load(config_file)
+    mapped_fields = [jira_config["issueTypes"]["Story"]["fields"][f]["id"] for f in fields_to_retreive]
+    values = jira.get_issue_details(story_key, mapped_fields)["text"]["fields"]
+    keys_values = {}
+    for v_index, v in enumerate(values):
+        keys_values[fields_to_retreive[mapped_fields.index(v)]] = values[v]
+    keys_values["Component/s"] = keys_values["Component/s"][0]["name"]
+    keys_values["Affects Version/s"] = keys_values["Affects Version/s"][0]["name"]
+
+    issue_details = {
+        "Project": project_id,
+        "Issue Type": "Bug",
+        "Summary": summary,
+        "Component/s": keys_values["Component/s"],
+        "Description": description,
+        "Affects Version/s": keys_values["Affects Version/s"],
+        "Epic Link": keys_values["Epic Link"],
+        "Affect": story_key
+}
+    print("Issue details: ")
+    for f in issue_details:
+        print("{}: {}".format(f, issue_details[f]))
+    return create_jira_issue(issue_details, jira_token)

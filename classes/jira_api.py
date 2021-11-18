@@ -34,8 +34,8 @@ class JiraApi:
         url = "{}/field".format(JIRA_BASE_URL)
         return wrap_api_result(requests.get(url, cookies=self.cookies))
 
-    def get_all_components(self, project_key):
-        url = "{}/project/{}/components".format(JIRA_BASE_URL, project_key)
+    def get_all_components(self, project_id):
+        url = "{}/project/{}/components".format(JIRA_BASE_URL, project_id)
         return wrap_api_result(requests.get(url, cookies=self.cookies))
 
     def get_meta_data_for_issue_type(self, project_key, issue_type):
@@ -44,6 +44,20 @@ class JiraApi:
 
     def get_link_types(self):
         url = "{}/issueLinkType".format(JIRA_BASE_URL)
+        return wrap_api_result(requests.get(url, cookies=self.cookies))
+
+    def get_issue_details(self, key_or_id, fields_to_return=None):
+        url = "{}/issue/{}".format(JIRA_BASE_URL, key_or_id)
+        if fields_to_return:
+            url += "?fields=" + ",".join(fields_to_return)
+        return wrap_api_result(requests.get(url, cookies=self.cookies))
+
+    def get_all_versions(self, project_id):
+        url = "{}/project/{}/versions".format(JIRA_BASE_URL, project_id)
+        return wrap_api_result(requests.get(url, cookies=self.cookies))
+
+    def get_version_details(self, version_id):
+        url = "{}/version/{}".format(JIRA_BASE_URL, version_id)
         return wrap_api_result(requests.get(url, cookies=self.cookies))
 
     def create_issue(self, fields):
@@ -72,35 +86,40 @@ class JiraApi:
                 body["fields"][f] = {
                     "id": fields[f]["value"]
                 }
-        body["update"] = {
-            "issuelinks": [{
-                "add": {
-                    "type": {
-                        "name": "Affect",
-                    },
-                    "outwardIssue": {
-                        "key": "WDACERT-955",
-
-                    }
-                }
-            }]
-        }
-        print(body)
-
-        # if assignee:
-        #     body["assignee"] = {
-        #             "name": assignee
+        # body["update"] = {
+        #     "issuelinks": [{
+        #         "add": {
+        #             "type": {
+        #                 "name": "Affect",
+        #             },
+        #             "outwardIssue": {
+        #                 "key": "WDACERT-955",
+        #
+        #             }
         #         }
-        # if reporter:
-        #     body["reporter"] = {
-        #         "name": reporter
-        #     }
-        # if epic_link:
-        #     body["reporter"] = {
-        #         "name": reporter
-        #     }
+        #     }]
+        # }
         json_payload = json.dumps(body)
         return wrap_api_result(requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
+
+    def create_version(self, project, name, description=None):
+        url = "{}/version".format(JIRA_BASE_URL)
+        body = {
+            "projectId": project,
+            "name": name,
+            "description": description,
+        }
+        json_payload = json.dumps(body)
+        return wrap_api_result(requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
+
+    def update_version(self, name, description, version_id):
+        url = "{}/version/{}".format(JIRA_BASE_URL, version_id)
+        body = {
+            "name": name,
+            "description": description,
+        }
+        json_payload = json.dumps(body)
+        return wrap_api_result(requests.put(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
 
     # def get_project_id_from_project_key(self, project_key):
     #     url = "{}/{}/{}".format(JIRA_BASE_URL, JIRA_END_POINTS["get_project_id_from_project_key"], project_key)
