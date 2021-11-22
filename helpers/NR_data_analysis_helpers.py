@@ -1,14 +1,27 @@
 from Specsheet_Automation.static_data.configuration import mimo_mapping, class_mapping
 
-def pop_delimiters_from_ie_list(ie_list, single_item_list=None):
+def pop_delimiters_from_ie_list(ie_list, single_item_list=None, split_list=None):
     for ie in ie_list:
         choice_list = True
+        split_list_found = False
+
         if isinstance(ie_list[ie], list):
             for i in ie_list[ie]:
                 if "special_" not in i:
-                    ie_list[ie] = [a for a in ie_list[ie] if "special_" not in a]
                     choice_list = False
-                if ie not in single_item_list:
+
+            if ie in split_list:
+                ie_list[ie] = {
+                    "primary": [a for a in ie_list[ie] if "special_" not in a],
+                    "secondary": [a.split("special_")[1] for a in ie_list[ie] if "special_" in a]
+                }
+                split_list_found = True
+
+            elif not choice_list:
+                ie_list[ie] = [a for a in ie_list[ie] if "special_" not in a]
+
+            if ie not in single_item_list:
+                if not split_list_found:
                     ie_list[ie] = [a.split("_itemVal_")[0] for a in ie_list[ie]]
             if choice_list:
                 ie_list[ie] = [a.split("special_")[1] for a in ie_list[ie]]
@@ -218,7 +231,7 @@ def get_bands_NR_dl(band_comb):
         edited_band_comb.append(
             "{}{}({})".format(
                 lte_band,
-                class_mapping[band_comb["lte"]["bandwidthClass"]["dl"][lte_band_index]],
+                class_mapping[int(band_comb["lte"]["bandwidthClass"]["dl"][lte_band_index])],
                 lte_mimo
             )
         )
@@ -230,7 +243,7 @@ def get_bands_NR_dl(band_comb):
         edited_band_comb.append(
             "n{}{}({})".format(
                 nr_band,
-                class_mapping[band_comb["nr"]["bandwidthClass"]["dl"][nr_band_index]],
+                class_mapping[int(band_comb["nr"]["bandwidthClass"]["dl"][nr_band_index])],
                 nr_mimo
             )
         )
@@ -252,9 +265,9 @@ def get_bands_NR_ul(band_comb):
 
     return "{}{}-n{}{}({})".format(
         band_comb["lte"]["bands"][index_of_ul_lte],
-        class_mapping[band_comb["lte"]["bandwidthClass"]["ul"][0]],
+        class_mapping[int(band_comb["lte"]["bandwidthClass"]["ul"][0])],
         band_comb["nr"]["bands"][nr_ul_index],
-        class_mapping[band_comb["nr"]["bandwidthClass"]["ul"][0]],
+        class_mapping[int(band_comb["nr"]["bandwidthClass"]["ul"][0])],
         ul_layer_num
     )
 
@@ -371,3 +384,14 @@ def initiate_empty_list(num_of_var, max_length):
     for i in range(num_of_var):
         result.append([None] * max_length)
     return result
+
+def convert_hex_to_binary(hex_num, min_zeros=32):
+    if not hex_num:
+        return hex_num
+    hex_num = hex_num.replace(":", "")
+    return bin(int(hex_num, 16))[2:].zfill(min_zeros)
+
+def present_bw(bw):
+    if not bw:
+        return None
+    return "{} ({})".format(bw, convert_hex_to_binary(bw, 10)[:10])

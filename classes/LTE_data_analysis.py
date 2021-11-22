@@ -354,9 +354,9 @@ class LTEDataAnalysis:
             ul_list = []
             dl_list = []
             for dl in b_c["dl"]:
-                dl_list.append("{}{}({})".format(dl["band"], class_mapping[dl["class"]], mimo_mapping[int(dl["mimo"])]))
+                dl_list.append("{}{}({})".format(dl["band"], class_mapping[int(dl["class"])], mimo_mapping[int(dl["mimo"])]))
             for ul in b_c["ul"]:
-                ul_list.append("{}{}".format(ul["band"], class_mapping[ul["class"]]))
+                ul_list.append("{}{}".format(ul["band"], class_mapping[int(ul["class"])]))
             data_item["ulBands"] = ul_list
             data_item["dlBands"] = dl_list
             data_item["dlCarriers"] = calculate_num_of_carriers(b_c["dl"])
@@ -406,8 +406,8 @@ class LTEDataAnalysis:
         mimo = []
         for band in self.band_combinations:
             for band_dl in band[ul_dl]:
-                if class_mapping[band_dl["class"]] not in classes:
-                    classes.append(class_mapping[band_dl["class"]])
+                if class_mapping[int(band_dl["class"])] not in classes:
+                    classes.append(class_mapping[int(band_dl["class"])])
                 if "mimo" in list(band_dl.keys()) and string_mimo_mapping[int(band_dl["mimo"])] not in mimo:
                     mimo.append(string_mimo_mapping[int(band_dl["mimo"])])
         return classes, mimo

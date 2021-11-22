@@ -373,14 +373,14 @@ MSR0835_all_UECI_fields = [
         "release": "release_9a0",
         "path": ["fdd-Add-UE-EUTRA-Capabilities-r9", "phyLayerParameters-r9", "ue-TxAntennaSelectionSupported"],
         "cell": "E79",
-        "values": ["Supported", "Not Supported"],
+        "values": ["Not Supported", "Supported"],
         "default": "No Information",
     },
     {
         "release": "release_9a0",
         "path": ["fdd-Add-UE-EUTRA-Capabilities-r9", "phyLayerParameters-r9", "ue-SpecificRefSigsSupported"],
         "cell": "E80",
-        "values": ["Supported", "Not Supported"],
+        "values": ["Not Supported", "Supported"],
         "default": "No Information",
     },
     {
@@ -401,14 +401,14 @@ MSR0835_all_UECI_fields = [
         "release": "release_9a0",
         "path": ["tdd-Add-UE-EUTRA-Capabilities-r9", "phyLayerParameters-r9", "ue-TxAntennaSelectionSupported"],
         "cell": "E85",
-        "values": ["Supported", "Not Supported"],
+        "values": ["Not Supported", "Supported"],
         "default": "No Information",
     },
     {
         "release": "release_9a0",
         "path": ["tdd-Add-UE-EUTRA-Capabilities-r9", "phyLayerParameters-r9", "ue-SpecificRefSigsSupported"],
         "cell": "E86",
-        "values": ["Supported", "Not Supported"],
+        "values": ["Not Supported", "Supported"],
         "default": "No Information",
     },
     {
