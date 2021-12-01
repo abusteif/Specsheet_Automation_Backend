@@ -295,7 +295,7 @@ NR_all_UECI_fields = [
     },
     {
         "release": "release_15",
-        "path": ["fr1-Add-UE-NR-Capabilities", "phy-ParametersFRX-Diff", "absoluteTPC-Command"],
+        "path": ["phy-Parameters", "phy-ParametersFRX-Diff", "absoluteTPC-Command"],
         "cell": "C73",
         "values": ["Supported", "Not Supported"],
         "default": "Not Supported"
