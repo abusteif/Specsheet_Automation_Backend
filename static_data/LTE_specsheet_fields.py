@@ -627,6 +627,13 @@ MSR0835_all_UECI_fields = [
         "processor": "rf-Parameters-v1430,ul-256QAM",
         "cell": "E132"
     },
+    {
+        "release": "release_1530",
+        "path": ["neighCellSI-AcquisitionParameters-v1530", "reportCGI-NR-NoEN-DC-r15"],
+        "cell": "E133",
+        "values": ["Supported"],
+        "default": "Not Supported"
+    },
 ]
 
 LTE_attach_request_fields = [
