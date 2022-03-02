@@ -262,6 +262,7 @@ def get_bands_NR_ul(band_comb):
     for nr_ul_index, nr_ul in enumerate(band_comb["featureSetCombination"]["nr"]["ul"]):
         if isinstance(nr_ul[0], dict):
             ul_layer_num = nr_ul[0]["maxNumberMIMO_LayersCB_PUSCH"]
+            break
 
     return "{}{}-n{}{}({})".format(
         band_comb["lte"]["bands"][index_of_ul_lte],
