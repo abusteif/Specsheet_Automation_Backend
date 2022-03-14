@@ -469,8 +469,9 @@ class LTEDataAnalysis:
 
     def release_1430_ul_256QAM(self):
         try:
-            ul_256QAM = self.list_items["release_1430,rf-Parameters-v1430,supportedBandCombination-v1430,"
-                                        "bandParameterList-v1430,BandParameters-v1430,ul-256QAM-r14"]
+            ul_256QAM = self.list_items["release_1430,rf-Parameters-v1430,supportedBandCombinationAdd-v1430,"
+                                        "BandCombinationParameters-v1430,bandParameterList-v1430,"
+                                        "BandParameters-v1430,ul-256QAM-r14"]
             for i in ul_256QAM:
                 if i != "0":
                     return "Not Supported"
