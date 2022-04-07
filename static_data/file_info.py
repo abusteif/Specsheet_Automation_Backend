@@ -17,7 +17,7 @@ hex_file_path = temp_files_folder / "hex_file.txt"
 converted_hex_file_path = "converted_hex_file.txt"
 pcap_file_path = "pcap_file.pcap"
 
-jira_config_file = jira_files_folder / "jira_config.txt"
+jira_config_file = jira_files_folder / "jira_config"
 LTE_specsheet_template = perm_files_folder / "MSR0835_template.xlsx"
 ENDC_specsheet_template = NR_files_folder / "ENDC_specsheet_template.xlsx"
 NR_LTE_specsheet_template = perm_files_folder / "NR_LTE_specsheet_template.xlsx"

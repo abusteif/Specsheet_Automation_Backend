@@ -99,6 +99,7 @@ class JiraApi:
         #         }
         #     }]
         # }
+        print(body)
         json_payload = json.dumps(body)
         return wrap_api_result(requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
 
