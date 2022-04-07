@@ -395,4 +395,4 @@ def convert_hex_to_binary(hex_num, min_zeros=32):
 def present_bw(bw):
     if not bw:
         return None
-    return "{} ({})".format(bw, convert_hex_to_binary(bw, 10)[:10])
+    return "{} ({})".format(bw, convert_hex_to_binary(bw, 16)[:10])
