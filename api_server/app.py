@@ -3,6 +3,7 @@ from flask_restful import Resource, Api
 from flask_cors import CORS
 from waitress import serve
 import logging
+import time
 
 from Specsheet_Automation.classes.jira_operations_class import JiraOperations
 from Specsheet_Automation.helpers.specsheet_automation_helpers import cleanup_files
@@ -11,7 +12,9 @@ from Specsheet_Automation.scripts.specsheet_automation import validate_data, \
     extract_and_populate_specsheet, get_message_fields
 
 from Specsheet_Automation.scripts.jira_automation import initialise_jira, create_jira_issue, create_defect, \
-    get_vendors_from_local, get_device_types_from_local
+    get_vendors_from_local, get_device_types_from_local, get_user, get_devices_for_vendor, \
+    get_testing_request_types_from_local, get_testing_priorities_from_local, get_wda_test_scopes_from_local, \
+    get_funding_from_local, get_releases_for_device
 from Specsheet_Automation.static_data.file_info import logs_file_path
 from Specsheet_Automation.static_data.configuration import MAX_RETRY_COUNT, ENVIRONMENT_URL, DEV
 
@@ -36,8 +39,87 @@ class GenerateCookies(Resource):
                 return {"token": cookies.get_dict()["crowd.token_key"]}
             except Exception as e:
                 print(repr(e))
+                time.sleep(1)
         else:
             return "Failed to generate Cookies", 408
+
+class JiraProject(Resource):
+
+    def get(self, projectKey):
+
+        jira_token = request.headers.get("Authorization")
+        jira_operations = JiraOperations(jira_token)
+        result = jira_operations.get_project_id_from_project_key(projectKey)
+        return result["text"], result["status"]
+
+class Devices(Resource):
+
+    def get(self, projectId):
+        jira_token = request.headers.get("Authorization")
+        jira_operations = JiraOperations(jira_token)
+        result = jira_operations.get_all_versions(projectId)
+        return result["text"], result["status"]
+
+class IotCycles(Resource):
+
+    def get(self):
+        args = request.args
+        jira_token = request.headers.get("Authorization")
+
+        jira_operations = JiraOperations(jira_token)
+        project_id = args["projectId"]
+        device_id = args["deviceId"]
+        result = jira_operations.get_all_cycles(project_id, device_id)
+        if result["status"] != 200:
+            return result["text"], result["status"]
+        output = []
+        for r in result["text"]:
+            if isinstance(result["text"][r], dict):
+                result["text"][r]["id"] = r
+                output.append(result["text"][r])
+        return output, 200
+
+
+class Validate(Resource):
+    def post(self):
+        data = request.get_json()
+        message_type = data["messageType"]
+        hex_data = data["hexData"]
+        result = validate_data(hex_data, message_type)
+        if result[0]:
+            return "Validation Successful", 200
+        if result[1] == "Malformed HEX data":
+            return result[1], 422
+        return result[1], 400
+
+
+class MSRFields(Resource):
+    def get(self, messageType):
+        return get_message_fields(messageType), 200
+
+class PopulateSpecsheet(Resource):
+
+    def post(self):
+        data = request.get_json()
+        dut_name = data["device"]
+        iot_cycle = data["iotCycle"]
+        hex_data = data["hexData"]
+        result = extract_and_populate_specsheet(hex_data, dut_name, iot_cycle)
+
+        if result[0]:
+            try:
+                return_data = io.BytesIO()
+                with open(result[2], "rb") as fo:
+                    return_data.write(fo.read())
+                return_data.seek(0)
+                cleanup_files(result[1])
+                return send_file(return_data,
+                                 mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                 attachment_filename="MSR0835_{}_{}.xlsx".format(dut_name, iot_cycle))
+            except Exception as e:
+                return "An error occurred while populating the Spec sheet: {}".format(repr(e)), 500
+        else:
+            return result[1], 422
 
 class JiraInitialise(Resource):
     def put(self):
@@ -65,10 +147,46 @@ class Device(Resource):
     def post(self):
         data = request.get_json()
         jira_token = request.headers.get("Authorization")
-        issue_details = data
-        result = create_jira_issue("device", issue_details, jira_token)
+        issue_details = data["issueDetails"]
+        new_user = data.get("newUser", None)
+        # return "ok", 201
+
+        result = create_jira_issue("device", issue_details, new_user, jira_token)
         if result[0]:
-            return result[1], 201
+            return result[1]["text"], result[1]["status"]
+        else:
+            return result[1], 500
+
+class Release(Resource):
+
+    def post(self):
+        data = request.get_json()
+        jira_token = request.headers.get("Authorization")
+        issue_details = data["issueDetails"]
+        new_user = data.get("newUser", None)
+    #     return  {
+    #     "key": "WDAFY20-2440",
+    #     "summary": "ACME Device Register test model (test market name)"
+    # }, 201
+
+        result = create_jira_issue("release", issue_details, new_user, jira_token)
+        if result[0]:
+            return result[1]["text"], result[1]["status"]
+        else:
+            return result[1], 500
+
+class IOTCycle(Resource):
+
+    def post(self):
+        data = request.get_json()
+        jira_token = request.headers.get("Authorization")
+        issue_details = data["issueDetails"]
+        new_user = data.get("newUser", None)
+        # return "ok", 201
+
+        result = create_jira_issue("iotCycle", issue_details, new_user, jira_token)
+        if result[0]:
+            return result[1]["text"], result[1]["status"]
         else:
             return result[1], 500
 
@@ -85,71 +203,59 @@ class JiraDefect(Resource):
         description = data["description"]
         return 200, create_defect(url, summary, description, jira_token)
 
+class User(Resource):
 
-class PopulateSpecsheet(Resource):
+    def get(self, dnumber):
 
-    def post(self):
-        data = request.get_json()
-        dut_name = data["device"]
-        iot_cycle = data["iotCycle"]
-        hex_data = data["hexData"]
-        result = extract_and_populate_specsheet(hex_data, dut_name, iot_cycle)
-
+        jira_token = request.headers.get("Authorization")
+        result = get_user(dnumber, jira_token)
         if result[0]:
-            try:
-                return_data = io.BytesIO()
-                with open(result[2], "rb") as fo:
-                    return_data.write(fo.read())
-                return_data.seek(0)
-                cleanup_files(result[1])
-                return send_file(return_data,
-                                 mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                 attachment_filename="MSR0835_{}_{}.xlsx".format(dut_name, iot_cycle))
-            except Exception as e:
-                return "An error occurred while populating the Spec sheet: {}".format(repr(e)), 500
+            return result[1]["text"], result[1]["status"]
         else:
-            return result[1], 422
+            return result[1], 500
 
-class JiraProject(Resource):
-
-    def get(self, projectKey):
-
+class DevicesForVendor(Resource):
+    def get(self, projectId, vendor):
         jira_token = request.headers.get("Authorization")
-        jira_operations = JiraOperations(jira_token)
-        result = jira_operations.get_project_id_from_project_key(projectKey)
-        return result["text"], result["status"]
+        result = get_devices_for_vendor(vendor, jira_token, projectId)
+        if result[0]:
+            return result[1], 200
+        else:
+            return result[1], 500
 
-class Devices(Resource):
-
-    def get(self, projectId):
+class ReleasesForDevice(Resource):
+    def get(self, projectId, deviceTicketId):
         jira_token = request.headers.get("Authorization")
-        jira_operations = JiraOperations(jira_token)
-        result = jira_operations.get_all_versions(projectId)
-        return result["text"], result["status"]
+        result = get_releases_for_device(deviceTicketId, jira_token, projectId)
+        if result[0]:
+            return result[1], 200
+        else:
+            return result[1], 500
 
-
-class IotCycles(Resource):
-
-    def get(self):
-        args = request.args
-        jira_token = request.headers.get("Authorization")
-
-        jira_operations = JiraOperations(jira_token)
-        project_id = args["projectId"]
-        device_id = args["deviceId"]
-        result = jira_operations.get_all_cycles(project_id, device_id)
-        if result["status"] != 200:
-            return result["text"], result["status"]
-        output = []
-        for r in result["text"]:
-            if isinstance(result["text"][r], dict):
-                result["text"][r]["id"] = r
-                output.append(result["text"][r])
-        return output, 200
+# class JiraIssueFields(Resource):
+#     def put(self):
+#         data = request.get_json()
+#         jira_token = request.headers.get("Authorization")
+#         issue_details = data["issueDetails"]
+#         issue_id = data["issueId"]
+#         result = update_issue_details(issue_id, issue_details, jira_token)
+#         # print(result)
+#         if result[0]:
+#             return result[1]["text"], result[1]["status"]
+#         else:
+#             return result[1], 500
 
 class Vendors(Resource):
     def get(self, projectId):
         result = get_vendors_from_local(projectId)
+        if result[0]:
+            return result[1], 200
+        else:
+            return result[1], 500
+
+class TestingPriorities(Resource):
+    def get(self, projectId):
+        result = get_testing_priorities_from_local(projectId)
         if result[0]:
             return result[1], 200
         else:
@@ -163,26 +269,36 @@ class DeviceTypes(Resource):
         else:
             return result[1], 500
 
-class Validate(Resource):
-    def post(self):
-        data = request.get_json()
-        message_type = data["messageType"]
-        hex_data = data["hexData"]
-        result = validate_data(hex_data, message_type)
+class TestingRequestTypes(Resource):
+    def get(self, projectId):
+        result = get_testing_request_types_from_local(projectId)
         if result[0]:
-            return "Validation Successful", 200
-        if result[1] == "Malformed HEX data":
-            return result[1], 422
-        return result[1], 400
+            return result[1], 200
+        else:
+            return result[1], 500
 
-class MSRFields(Resource):
-    def get(self, messageType):
-        return get_message_fields(messageType), 200
-
+class WDATestScope(Resource):
+    def get(self, projectId):
+        result = get_wda_test_scopes_from_local(projectId)
+        if result[0]:
+            return result[1], 200
+        else:
+            return result[1], 500
+class Funding(Resource):
+    def get(self, projectId):
+        result = get_funding_from_local(projectId)
+        if result[0]:
+            return result[1], 200
+        else:
+            return result[1], 500
 
 api.add_resource(GenerateCookies, '/generateCookies')
 # api.add_resource(JiraIssue, '/jiraIssue')
 api.add_resource(Device, '/device')
+api.add_resource(Release, '/release')
+api.add_resource(IOTCycle, '/iotCycle')
+
+# api.add_resource(JiraIssueFields, '/jiraIssueFields')
 api.add_resource(JiraDefect, '/jiraDefect')
 api.add_resource(JiraProject, '/jiraProject/<string:projectKey>')
 api.add_resource(Devices, '/devices/<string:projectId>')
@@ -192,7 +308,14 @@ api.add_resource(PopulateSpecsheet, '/populateSpecsheet')
 api.add_resource(MSRFields, '/messageFields/<string:messageType>')
 api.add_resource(JiraInitialise, '/jiraInitialise')
 api.add_resource(Vendors, '/vendors/<string:projectId>')
+api.add_resource(WDATestScope, '/wdaTestScopes/<string:projectId>')
 api.add_resource(DeviceTypes, '/deviceTypes/<string:projectId>')
+api.add_resource(Funding, '/funding/<string:projectId>')
+api.add_resource(TestingPriorities, '/testingPriorities/<string:projectId>')
+api.add_resource(User, '/user/<string:dnumber>')
+api.add_resource(DevicesForVendor, '/devicesForVendor/<string:projectId>/<string:vendor>')
+api.add_resource(ReleasesForDevice, '/releasesForDevice/<string:projectId>/<string:deviceTicketId>')
+api.add_resource(TestingRequestTypes, '/testingRequestTypes/<string:projectId>')
 
 if __name__ == '__main__':
     if DEV:

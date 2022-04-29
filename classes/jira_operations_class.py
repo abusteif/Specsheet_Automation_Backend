@@ -22,6 +22,7 @@ class JiraOperations:
             # self.session = requests.Session()
             # self.session.get(JIRA_AUTH_URL, headers=JIRA_HEADERS, auth=(JIRA_USERNAME, JIRA_PASSWORD), timeout=TIMEOUT)
             self.cookies = requests.get(JIRA_AUTH_URL, headers=JIRA_HEADERS, auth=(JIRA_USERNAME, JIRA_PASSWORD), timeout=TIMEOUT).cookies
+
             print("Received Jira Cookie")
 
     def get_cookies(self):

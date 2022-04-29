@@ -1,5 +1,6 @@
 import requests
 import json
+from json import JSONDecodeError
 from Specsheet_Automation.static_data.jira_config import JIRA_USERNAME, JIRA_PASSWORD, JIRA_BASE_URL, JIRA_AUTH_URL, \
     JIRA_HEADERS
 
@@ -7,10 +8,16 @@ JIRA_AUTH = (JIRA_USERNAME, JIRA_PASSWORD)
 TIMEOUT = 10
 
 def wrap_api_result(result):
-    return {
-        "text": result.json(),
-        "status": result.status_code
-    }
+    try:
+        return {
+            "text": result.json(),
+            "status": result.status_code
+        }
+    except JSONDecodeError:
+        return {
+            "text": "",
+            "status": result.status_code
+        }
 
 class JiraApi:
     def __init__(self, cookies=None):
@@ -21,6 +28,11 @@ class JiraApi:
 
     def get_cookies(self):
         return self.cookies
+
+    def get_user_details(self, user_id):
+        url = "{}/user?username={}".format(JIRA_BASE_URL, user_id)
+        # print(requests.get(url, cookies=self.cookies))
+        return wrap_api_result(requests.get(url, cookies=self.cookies))
 
     def get_project_details(self, project_key):
         url = "{}/project/{}".format(JIRA_BASE_URL, project_key)
@@ -65,6 +77,7 @@ class JiraApi:
         body = {
             "fields": dict()
         }
+        # print(fields)
         for f in fields:
             if f == "update":
                 continue
@@ -72,6 +85,7 @@ class JiraApi:
                     fields[f]["type"] == "any" or \
                     fields[f]["type"] == "date":
                 body["fields"][f] = fields[f]["value"]
+
             if fields[f]["type"] == "array":
                 if fields[f]["allowedValues"]:
                     body["fields"][f] = [
@@ -81,6 +95,15 @@ class JiraApi:
                     ]
                 else:
                     body["fields"][f] = [fields[f]["value"]]
+
+            if fields[f]["type"] == "option":
+                if fields[f]["allowedValues"]:
+                    body["fields"][f] = {
+                            "id": fields[f]["value"]
+                        }
+
+                # else:
+                #     body["fields"][f] = [fields[f]["value"]]
             if fields[f]["type"] == "project" or \
                     fields[f]["type"] == "issuetype":
                 body["fields"][f] = {
@@ -101,7 +124,20 @@ class JiraApi:
         # }
         print(body)
         json_payload = json.dumps(body)
+        # return {"text": "", "status": 400}
         return wrap_api_result(requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
+
+    def update_issue(self, issue_key, fields):
+        url = "{}/issue/{}".format(JIRA_BASE_URL, issue_key)
+        body = {
+            "fields": dict()
+        }
+        for f in fields:
+            body["fields"][f] = fields[f]
+        json_payload = json.dumps(body)
+        return wrap_api_result(requests.put(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
+
+
 
     def create_version(self, project, name, description=None):
         url = "{}/version".format(JIRA_BASE_URL)
@@ -121,6 +157,18 @@ class JiraApi:
         }
         json_payload = json.dumps(body)
         return wrap_api_result(requests.put(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
+
+    def search_story(self, query, fields_to_return):
+        query_string = " AND ".join(["'{}'='{}'".format(q, query[q]) for q in [*query]])
+
+        url = "{}/search".format(JIRA_BASE_URL)
+        body = {
+            "jql": query_string,
+            "fields": fields_to_return
+        }
+        json_payload = json.dumps(body)
+        print(body)
+        return wrap_api_result(requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
 
     # def get_project_id_from_project_key(self, project_key):
     #     url = "{}/{}/{}".format(JIRA_BASE_URL, JIRA_END_POINTS["get_project_id_from_project_key"], project_key)

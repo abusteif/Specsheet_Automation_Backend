@@ -1,5 +1,5 @@
 JIRA_USERNAME = "n110382"
-JIRA_PASSWORD = "Mtsrobo67@"
+JIRA_PASSWORD = "Jjhsydx@22"
 JIRA_HEADERS = {
     "Content-Type": "application/json",
     "Accept": "application/json"
