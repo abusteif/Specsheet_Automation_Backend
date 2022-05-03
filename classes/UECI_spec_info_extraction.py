@@ -1,11 +1,11 @@
-import docx2txt
 import csv
 from itertools import zip_longest
-from Specsheet_Automation.helpers.Spec_UECI_Info_Extraction_helpers import *
+from Specsheet_Automation.helpers.UECI_spec_info_extraction_helpers import *
 from Specsheet_Automation.helpers.data_conversion_helpers import *
-from Specsheet_Automation.helpers.DUT_SPEC_UECI_Info_Extraction_helpers import get_data_from_csv
+from Specsheet_Automation.helpers.UECI_info_extraction_helpers import get_data_from_csv
 
-class Spec_Doc_Info_Extraction:
+
+class UECISpecInfoExtraction:
 
     def __init__(self, release_word_doc_path, release_text_file_path):
         self.release_word_doc = release_word_doc_path
@@ -16,75 +16,21 @@ class Spec_Doc_Info_Extraction:
         self.all_ie_lists_file = ""
 
     def extract_info_from_release_word_doc(self):
-        text_info = docx2txt.process(self.release_word_doc)
-        start_recording = False
-        with open(self.release_text_file, "w") as release_text:
-            for line in text_info.split("\n"):
-                if not line.strip():
-                    continue
-                if "-- ASN1STAR" in line:
-                    continue
-                if "UE-EUTRA-Capability information element" in line.strip():
-                    start_recording = True
-                if line.strip() == "-- ASN1STOP":
-                    start_recording = False
-                if start_recording:
-                    parts = line.split("\t")
-                    new_line = " ".join(parts)
-                    new_line = " ".join(new_line.split())
-                    if "::=" in new_line:
-                        if " ::=" not in new_line:
-                            new_line = "".join(new_line.split("::=")[0]+" ::="+new_line.split("::=")[1])
-                    if new_line.strip().endswith("OPTIONAL}"):
-                        release_text.write(new_line[:-1] + "\n")
-                        release_text.write("}\n")
-                        continue
-                    if new_line.strip().endswith("OF"):
-                        release_text.write(new_line + " ")
-
-                    else:
-                        release_text.write(new_line + "\n")
+        return
 
     def build_initial_releases(self, categories_file):
-        with open(self.release_text_file, "r") as release_text:
-            self.spec_plain_text = release_text.readlines()
-        late = False
-        late_releases = {}
-        regular_releases = {}
-        for line_index, line in enumerate(self.spec_plain_text):
-            if line.startswith("-- Late non critical extensions"):
-                late = True
-            if line.startswith("UE-EUTRA-Capability ::="):
-                self.releases["release_8"] = find_sequence(1, self.spec_plain_text)
-                regular_releases["release_8"] = []
-            if line.startswith("-- Regular non critical extensions"):
-                late = False
-            if line.startswith("UE-EUTRA-Capability-"):
-                release = "release_" + line.split("-")[3][1:]
-                if late:
-                    late_releases[release] = []
-                else:
-                    regular_releases[release] = []
-                self.releases[release] = find_sequence(line_index, self.spec_plain_text)
-        with open(categories_file, "w") as release_categories:
-            release_categories.write(json.dumps({
-                "regular": regular_releases,
-                "late": late_releases
-            }))
+        return
 
-    def build_all_releases(self, all_ie_json_file, all_ie_lists_file, categories_file):
+    def build_all_releases(self, categories_file):
         self.build_initial_releases(categories_file)
         self.releases_full = self.releases.copy()
         for release in self.releases:
             all_releases = get_data_structure(self.releases[release], self.spec_plain_text, {})
             self.releases[release] = all_releases[1]
             self.releases_full[release] = all_releases[0]
-
         self.releases = simplify_last_child(self.releases)
-
         self.releases_full = simplify_last_child_lists(self.releases_full)
-        self.save_data_to_json(all_ie_json_file)
-        self.convert_json_to_list(all_ie_json_file, all_ie_lists_file)
+        # print(self.releases_full)
 
     def save_data_to_json(self, all_ie_json_file):
         with open(all_ie_json_file, "w") as all_ie:
@@ -103,8 +49,8 @@ class Spec_Doc_Info_Extraction:
                 if isinstance(current_value[d], tuple):
                     if current_value[d][1]:
                         found = True
-                        if json_field[:d_num+1] not in columns_list:
-                            columns_list.append(json_field[:d_num+1])
+                        if json_field[:d_num + 1] not in columns_list:
+                            columns_list.append(json_field[:d_num + 1])
                     current_value = current_value[d][0]
                 else:
                     current_value = current_value[d]
@@ -139,7 +85,7 @@ class Spec_Doc_Info_Extraction:
         warning_list = {"items_to_omit": []}
         with open(warning_list_file, "w") as warning_file:
             for c1 in columns:
-                for c2 in columns[columns.index(c1)+1:]:
+                for c2 in columns[columns.index(c1) + 1:]:
                     if set(c1[:c1.index('')]) < set(c2):
                         warning_list["items_to_omit"].append(c1[:c1.index('')])
                         break

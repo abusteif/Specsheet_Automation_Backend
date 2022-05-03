@@ -2,12 +2,13 @@ from Specsheet_Automation.classes.jira_operations_class import JiraOperations
 import time
 class JiraInteractions:
 
-    def __init__(self, device_name, iot_cycle, project_key, jira_token):
+    def __init__(self, device_name=None, iot_cycle=None, project_key=None, jira_token=None):
         self.jira_operations = JiraOperations(jira_token)
         self.version_id = ""
         self.cycle_id = ""
         self.project_id = ""
-        self.get_device_jira_info(device_name, iot_cycle, project_key)
+        if device_name:
+            self.get_device_jira_info(device_name, iot_cycle, project_key)
 
     def add_steps_to_test_case(self, test_case_key, new_steps_list):
         test_case = self.jira_operations.search_for_test_case(test_case_key)["text"]
@@ -15,11 +16,10 @@ class JiraInteractions:
         all_steps = [step["step"] for step in
                      self.jira_operations.get_test_case_steps(test_case_id)["text"]["stepBeanCollection"]]
 
-        for new_steps in new_steps_list:
-            for data in new_steps:
-                if data not in all_steps:
-                    content = {"step": data}
-                    self.jira_operations.create_step(test_case_id, content)
+        for new_step in new_steps_list:
+            if new_step not in all_steps:
+                content = {"step": new_step}
+                self.jira_operations.create_step(test_case_id, content)
 
     def get_device_jira_info(self, device_name, iot_cycle, project_key):
         self.project_id = self.jira_operations.get_project_id_from_project_key(project_key)["text"]["id"]
@@ -75,13 +75,10 @@ class JiraInteractions:
                     break
                 for test_step in jira_test_steps:
                     if test_step["step"] in results:
-                        if "errorId" in self.jira_operations.update_step_result_by_id(str(test_step["id"]),
+                        if not self.jira_operations.update_step_result_by_id(str(test_step["id"]),
                                                                       {"comment": results[test_step["step"]],
-                                                                       "status": "1"})["text"]:
-                            print("********************************************")
-                        print(self.jira_operations.update_step_result_by_id(str(test_step["id"]),
-                                                                       {"comment": results[test_step["step"]],
-                                                                        "status": "1"})["text"])
+                                                                       "status": "1"})["status"]:
+                            print(test_step)
                 offset += 500
         except Exception as e:
             print("The following error was encountered while updating test results: {}\nPlease retry later."

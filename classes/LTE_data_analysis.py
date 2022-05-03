@@ -1,10 +1,16 @@
 from Specsheet_Automation.helpers.data_analysis_helpers import get_start_end, get_bands, calculate_num_of_carriers, \
-    calculate_num_of_layers
-from Specsheet_Automation.static_data.specsheet_fields import convert_hex_to_binary
+    calculate_num_of_layers, get_length, pop_special_from_ie_list_LTE, get_value_from_itemVal
+from Specsheet_Automation.static_data.LTE_specsheet_fields import convert_hex_to_binary
 from Specsheet_Automation.static_data.configuration import mimo_mapping, class_mapping, string_mimo_mapping
 
-class DataAnalysis:
+class LTEDataAnalysis:
     def __init__(self, ie_list):
+        single_item_list = [
+            "release_1180,rf-Parameters-v1180,supportedBandCombinationAdd-r11,BandCombinationParameters-r11,"
+            "multipleTimingAdvance-r11"
+        ]
+        pop_special_from_ie_list_LTE(ie_list, single_item_list)
+
         self.list_items = ie_list
         self.processors = {
                 "rf-Parameters,supportedBandListEUTRA": self.supportedBandListEUTRA,
@@ -56,7 +62,18 @@ class DataAnalysis:
         self.multipleTimingAdvance_r11 = None
 
     def supportedBandListEUTRA(self):
-        return self.list_items["release_8,rf-Parameters,supportedBandListEUTRA,SupportedBandEUTRA,bandEUTRA"]
+        raw_list = self.list_items["release_8,rf-Parameters,supportedBandListEUTRA,SupportedBandEUTRA,bandEUTRA"]
+        for index, i in enumerate(raw_list):
+            if i == "64":
+                raw_list = raw_list[:index]
+                break
+
+        try:
+            extra_bands = self.list_items["release_9e0,rf-Parameters-v9e0,supportedBandListEUTRA-v9e0,"
+                                          "SupportedBandEUTRA-v9e0,bandEUTRA-v9e0"]
+            return raw_list + extra_bands
+        except KeyError:
+            return self.list_items["release_8,rf-Parameters,supportedBandListEUTRA,SupportedBandEUTRA,bandEUTRA"]
 
     def release_8_interFreqNeedForGaps(self):
         try:
@@ -83,14 +100,15 @@ class DataAnalysis:
 
     def utraFDD(self):
         utraFDD_bands = ["bandI", "bandII", "bandIII", "bandIV", "bandV", "bandVI", "bandVII", "bandVIII", "bandIX",
-                         "bandX", "bandXI", "bandXII", "bandXIII", "bandXIV", "bandXV", "bandXVI", "...", "bandXVII-8a0",
-                         "bandXVIII-8a0", "bandXIX-8a0", "bandXX-8a0", "bandXXI-8a0", "bandXXII-8a0", "bandXXIII-8a0",
-                         "bandXXIV-8a0", "bandXXV-8a0", "bandXXVI-8a0", "bandXXVII-8a0", "bandXXVIII-8a0",
-                         "bandXXIX-8a0", "bandXXX-8a0", "bandXXXI-8a0", "bandXXXII-8a0"]
+                         "bandX", "bandXI", "bandXII", "bandXIII", "bandXIV", "bandXV", "bandXVI", "...",
+                         "bandXVII-8a0", "bandXVIII-8a0", "bandXIX-8a0", "bandXX-8a0", "bandXXI-8a0", "bandXXII-8a0",
+                         "bandXXIII-8a0", "bandXXIV-8a0", "bandXXV-8a0", "bandXXVI-8a0", "bandXXVII-8a0",
+                         "bandXXVIII-8a0", "bandXXIX-8a0", "bandXXX-8a0", "bandXXXI-8a0", "bandXXXII-8a0"]
         try:
             mapped_bands = [utraFDD_bands[int(band)] for band in
                             self.list_items[
-                                "release_8,interRAT-Parameters,utraFDD,supportedBandListUTRA-FDD,SupportedBandUTRA-FDD"]]
+                                "release_8,interRAT-Parameters,utraFDD,supportedBandListUTRA-FDD,"
+                                "SupportedBandUTRA-FDD"]]
         except KeyError:
             return ["UTRAN not supported"]
         return mapped_bands
@@ -225,12 +243,13 @@ class DataAnalysis:
                 "release_1180,rf-Parameters-v1180,supportedBandCombinationAdd-r11,BandCombinationParameters-r11,"
                 "multipleTimingAdvance-r11"]
         except KeyError:
+            self.multipleTimingAdvance_r11 = []
             pass
         try:
             self.interRAT_BandList_r11 = self.list_items[
                 "release_1180,rf-Parameters-v1180,supportedBandCombinationAdd-r11,BandCombinationParameters-r11,"
                 "bandInfoEUTRA-r11,interRAT-BandList"]
-        except KeyError as e:
+        except KeyError:
             pass
 
         inter_freq_r11 = get_start_end(self.interFreqBandList_r11, "<") if self.interFreqBandList_r11 else None
@@ -239,13 +258,17 @@ class DataAnalysis:
             if self.supportedBandCombinationAdd_r11 else None
         all_band_combinations = []
 
-        def get_length(item):
-            return int(item[1]) - int(item[0]) if item.__len__() > 0 else 0
         start = 0
         if not band_combinations_r11:
             return
+
         inter_rat_r11 = inter_rat_r11 if inter_rat_r11 else [[]]*band_combinations_r11.__len__()
         inter_freq_r11 = inter_freq_r11 if inter_freq_r11 else [[]]*band_combinations_r11.__len__()
+
+        self.multipleTimingAdvance_r11 = get_value_from_itemVal(self.multipleTimingAdvance_r11,
+                                                                len(band_combinations_r11))
+
+        band_counter = 0
 
         for bc_r11, interf_r11, interr_r11 in zip(band_combinations_r11, inter_freq_r11, inter_rat_r11):
             bcs = "default"
@@ -256,10 +279,7 @@ class DataAnalysis:
             if get_length(band_combs[-1]) == 1 and get_length(band_combs[0]) != 5:
                 start = end - 1
                 band_combs = band_combs[:-1]
-                # This checks if there is uplink CA in which case it assumes the extra number is
-                # multipleTimingAdvance_r11
-                length_check = [True for b in band_combs if get_length(b) == 4]
-                if length_check.__len__() < 2:
+                if not self.multipleTimingAdvance_r11[band_counter]:
                     bcs = self.supportedBandwidthCombinationSet_r11.pop(0)
             elif get_length(band_combs[-1]) == 2:
                 # This assumes that multipleTimingAdvance_r11 and supportedBandwidthCombinationSet_r11 are there
@@ -273,9 +293,9 @@ class DataAnalysis:
             else:
                 start = end
             all_band_combinations.append({"band_combs": band_combs, "bcs": bcs})
+            band_counter += 1
         if self.supportedBandwidthCombinationSet_r11.__len__() > 0:
             all_band_combinations[-1]["bcs"] = self.supportedBandwidthCombinationSet_r11.pop(0)
-        print( self.supportedBandwidthCombinationSet_r11)
 
         ul_counter = 0
         dl_counter = 0
@@ -284,12 +304,10 @@ class DataAnalysis:
 
             for ob in bc["band_combs"]:
                 if (ob[1] - ob[0]) % 2 == 0:
-                    # noinspection PyTypeChecker
                     new_comb["ul"].append({"band": self.bandEUTRA_r11[dl_counter],
                                            "class": self.ca_BandwidthClassUL_r10_r11[ul_counter]})
 
                     ul_counter += 1
-                # noinspection PyTypeChecker
                 new_comb["dl"].append({"band": self.bandEUTRA_r11[dl_counter],
                                        "class": self.ca_BandwidthClassDL_r10_r11[dl_counter],
                                        "mimo": self.supportedMIMO_CapabilityDL_r10_r11[dl_counter]})
@@ -336,9 +354,9 @@ class DataAnalysis:
             ul_list = []
             dl_list = []
             for dl in b_c["dl"]:
-                dl_list.append("{}{}({})".format(dl["band"], class_mapping[dl["class"]], mimo_mapping[int(dl["mimo"])]))
+                dl_list.append("{}{}({})".format(dl["band"], class_mapping[int(dl["class"])], mimo_mapping[int(dl["mimo"])]))
             for ul in b_c["ul"]:
-                ul_list.append("{}{}".format(ul["band"], class_mapping[ul["class"]]))
+                ul_list.append("{}{}".format(ul["band"], class_mapping[int(ul["class"])]))
             data_item["ulBands"] = ul_list
             data_item["dlBands"] = dl_list
             data_item["dlCarriers"] = calculate_num_of_carriers(b_c["dl"])
@@ -353,14 +371,34 @@ class DataAnalysis:
             "dl": [],
             "ul": []
         }
+
+        ul_categories_mapping = {
+            "ue-CategoryUL-v1310": ["n14", "m1"],
+            "ue-CategoryUL-v1350": ["oneBis"],
+            "ue-CategoryUL-v1430": ["n16", "n17", "n18", "n19", "n20", "m2"],
+            "ue-CategoryUL-v1430b": ["n21"]
+        }
+        dl_categories_mapping = {
+            "ue-CategoryDL-v1310": ["n17", "m1"],
+            "ue-CategoryDL-v1350": ["oneBis"],
+            "ue-CategoryDL-v1430": ["m2"],
+        }
         for element in self.list_items:
             if "Category" in element:
                 if isinstance(element, list):
                     element = element[0]
                 if "UL" in element:
-                    categories["ul"].append(self.list_items[element])
+                    if element.split(",")[-1] not in ul_categories_mapping:
+                        categories["ul"].append(self.list_items[element])
+                    else:
+                        categories["ul"].append(ul_categories_mapping[element.split(",")[-1]]
+                                                [int(self.list_items[element])])
                 else:
-                    categories["dl"].append(self.list_items[element])
+                    if element.split(",")[-1] not in dl_categories_mapping:
+                        categories["dl"].append(self.list_items[element])
+                    else:
+                        categories["dl"].append(dl_categories_mapping[element.split(",")[-1]]
+                                                [int(self.list_items[element])])
         return categories
 
     def get_release_class_mimo(self, ul_dl):
@@ -368,8 +406,8 @@ class DataAnalysis:
         mimo = []
         for band in self.band_combinations:
             for band_dl in band[ul_dl]:
-                if class_mapping[band_dl["class"]] not in classes:
-                    classes.append(class_mapping[band_dl["class"]])
+                if class_mapping[int(band_dl["class"])] not in classes:
+                    classes.append(class_mapping[int(band_dl["class"])])
                 if "mimo" in list(band_dl.keys()) and string_mimo_mapping[int(band_dl["mimo"])] not in mimo:
                     mimo.append(string_mimo_mapping[int(band_dl["mimo"])])
         return classes, mimo
@@ -431,8 +469,9 @@ class DataAnalysis:
 
     def release_1430_ul_256QAM(self):
         try:
-            ul_256QAM = self.list_items["release_1430,rf-Parameters-v1430,supportedBandCombination-v1430,"
-                                        "bandParameterList-v1430,BandParameters-v1430,ul-256QAM-r14"]
+            ul_256QAM = self.list_items["release_1430,rf-Parameters-v1430,supportedBandCombinationAdd-v1430,"
+                                        "BandCombinationParameters-v1430,bandParameterList-v1430,"
+                                        "BandParameters-v1430,ul-256QAM-r14"]
             for i in ul_256QAM:
                 if i != "0":
                     return "Not Supported"

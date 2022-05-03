@@ -133,7 +133,7 @@ jira_test_step_order_to_field_mapping = {
 }
 
 
-MSR0835_all_fields = [
+MSR0835_all_UECI_fields = [
     {
         "release": "release_8",
         "path": "accessStratumRelease",
@@ -373,14 +373,14 @@ MSR0835_all_fields = [
         "release": "release_9a0",
         "path": ["fdd-Add-UE-EUTRA-Capabilities-r9", "phyLayerParameters-r9", "ue-TxAntennaSelectionSupported"],
         "cell": "E79",
-        "values": ["Supported", "Not Supported"],
+        "values": ["Not Supported", "Supported"],
         "default": "No Information",
     },
     {
         "release": "release_9a0",
         "path": ["fdd-Add-UE-EUTRA-Capabilities-r9", "phyLayerParameters-r9", "ue-SpecificRefSigsSupported"],
         "cell": "E80",
-        "values": ["Supported", "Not Supported"],
+        "values": ["Not Supported", "Supported"],
         "default": "No Information",
     },
     {
@@ -401,14 +401,14 @@ MSR0835_all_fields = [
         "release": "release_9a0",
         "path": ["tdd-Add-UE-EUTRA-Capabilities-r9", "phyLayerParameters-r9", "ue-TxAntennaSelectionSupported"],
         "cell": "E85",
-        "values": ["Supported", "Not Supported"],
+        "values": ["Not Supported", "Supported"],
         "default": "No Information",
     },
     {
         "release": "release_9a0",
         "path": ["tdd-Add-UE-EUTRA-Capabilities-r9", "phyLayerParameters-r9", "ue-SpecificRefSigsSupported"],
         "cell": "E86",
-        "values": ["Supported", "Not Supported"],
+        "values": ["Not Supported", "Supported"],
         "default": "No Information",
     },
     {
@@ -626,5 +626,148 @@ MSR0835_all_fields = [
         "release": "release_1430",
         "processor": "rf-Parameters-v1430,ul-256QAM",
         "cell": "E132"
+    },
+    {
+        "release": "release_1530",
+        "path": ["neighCellSI-AcquisitionParameters-v1530", "reportCGI-NR-NoEN-DC-r15"],
+        "cell": "E133",
+        "values": ["Supported"],
+        "default": "Not Supported"
+    },
+]
+
+LTE_attach_request_fields = [
+    {
+        "element": "nas_eps.emm.eps_att_type",
+        "values": [None, "EPS attach", "combined EPS/IMSI attach", "EPS RLOS attach", None, None,
+                   "EPS emergency attach", "Reserved"],
+        "cell": "E13"
+    },
+    {
+        "element": "nas_eps.esm_pdn_type",
+        "values": [None, "IPv4", "IPv6", "IPv4v6", None, "none IP", "Ethernet"],
+        "cell": "E14"
+    },
+    {
+        "element": "nas_eps.esm.eit",
+        "values": ["0 security protected ESM information transfer not required",
+                   "1 security protected ESM information transfer required"],
+        "cell": "E15",
+        "default": "No Information"
+    },
+    {
+        "element": "nas_eps.emm.eea0",
+        "values": ["Not Supported", "Supported"],
+        "cell": "E17",
+        "default": "No Information"
+    },
+    {
+        "element": "nas_eps.emm.128eea1",
+        "values": ["Not Supported", "Supported"],
+        "cell": "E18",
+        "default": "No Information"
+    },
+    {
+        "element": "nas_eps.emm.128eea2",
+        "values": ["Not Supported", "Supported"],
+        "cell": "E19",
+        "default": "No Information"
+    },
+    {
+        "element": "nas_eps.emm.eea3",
+        "values": ["Not Supported", "Supported"],
+        "cell": "E20",
+        "default": "No Information"
+    },
+    {
+        "element": "nas_eps.emm.eia0",
+        "values": ["Not Supported", "Supported"],
+        "cell": "E21",
+        "default": "No Information"
+    },
+    {
+        "element": "nas_eps.emm.128eia1",
+        "values": ["Not Supported", "Supported"],
+        "cell": "E22",
+        "default": "No Information"
+    },
+    {
+        "element": "nas_eps.emm.128eia2",
+        "values": ["Not Supported", "Supported"],
+        "cell": "E23",
+        "default": "No Information"
+    },
+    {
+        "element": "nas_eps.emm.eia3",
+        "values": ["Not Supported", "Supported"],
+        "cell": "E24",
+        "default": "No Information"
+    },
+    {
+        "element": "gsm_a.gm.gmm.net_cap.lcs",
+        "values": ["Not Supported", "Supported"],
+        "cell": "E25",
+        "default": "No Information"
+    },
+    {
+        "element": "gsm_a.gm.gmm.net_cap.ps_irat_iu",
+        "values": ["Not Supported", "Supported"],
+        "cell": "E26",
+        "default": "No Information"
+    },
+    {
+        "element": "gsm_a.gm.gmm.net_cap.ps_irat_s1",
+        "values": ["Not Supported", "Supported"],
+        "cell": "E27",
+        "default": "No Information"
+    },
+    {
+        "element": "gsm_a.gm.gmm.net_cap.comb_proc",
+        "values": ["Not Supported", "Supported"],
+        "cell": "E28",
+        "default": "No Information"
+    },
+    {
+        "element": "gsm_a.gm.gmm.net_cap.isr",
+        "values": ["Not Supported", "Supported"],
+        "cell": "E29",
+        "default": "No Information"
+    },
+    {
+        "element": "gsm_a.gm.gmm.net_cap.srvcc_to_geran",
+        "values": ["Not Supported", "Supported"],
+        "cell": "E30",
+        "default": "No Information"
+    },
+    {
+        "element": "gsm_a.gm.gmm.net_cap.epc",
+        "values": ["Not Supported", "Supported"],
+        "cell": "E31",
+        "default": "No Information"
+    },
+    {
+        "element": "gsm_a.gm.gmm.net_cap.nf",
+        "values": ["Not Supported", "Supported"],
+        "cell": "E32",
+        "default": "No Information"
+    },
+    {
+        "element": "nas_eps.emm.add_upd_type",
+        "values": ["no additional information", "SMS only"],
+        "cell": "E33",
+        "default": "No Information"
+    },
+    {
+        "element": "gsm_a.gm.gmm.ue_usage_setting",
+        "values": ["Voice Centric", "Data Centric"],
+        "cell": "E35",
+        "default": "No Information"
+    },
+    {
+        "element": "gsm_a.gm.gmm.voice_domain_pref_for_eutran",
+        "values": ["CS Voice only", "IMS PS Voice only", "CS voice preferred, IMS PS Voice as secondary",
+                   "IMS PS voice preferred, CS Voice as secondary", ],
+        "cell": "E36",
+        "default": "No Information"
     },
 ]

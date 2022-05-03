@@ -5,7 +5,7 @@ from Specsheet_Automation.static_data.configuration import *
 import time
 
 JIRA_AUTH = (JIRA_USERNAME, JIRA_PASSWORD)
-TIMEOUT = 5
+TIMEOUT = 10
 def wrap_api_result(result):
     return {
         "text": result.json(),
@@ -22,6 +22,7 @@ class JiraOperations:
             # self.session = requests.Session()
             # self.session.get(JIRA_AUTH_URL, headers=JIRA_HEADERS, auth=(JIRA_USERNAME, JIRA_PASSWORD), timeout=TIMEOUT)
             self.cookies = requests.get(JIRA_AUTH_URL, headers=JIRA_HEADERS, auth=(JIRA_USERNAME, JIRA_PASSWORD), timeout=TIMEOUT).cookies
+
             print("Received Jira Cookie")
 
     def get_cookies(self):
