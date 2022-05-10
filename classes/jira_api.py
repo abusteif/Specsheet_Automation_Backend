@@ -3,11 +3,18 @@ import json
 from json import JSONDecodeError
 from Specsheet_Automation.static_data.jira_config import JIRA_USERNAME, JIRA_PASSWORD, JIRA_BASE_URL, JIRA_AUTH_URL, \
     JIRA_HEADERS
+import time
+from multiprocessing import Value
 
 JIRA_AUTH = (JIRA_USERNAME, JIRA_PASSWORD)
 TIMEOUT = 10
+counter_rate_limit = Value('i', 0)
 
 def wrap_api_result(result):
+    print(result)
+    counter_rate_limit.value += 1
+    print(counter_rate_limit.value)
+
     try:
         return {
             "text": result.json(),
@@ -19,6 +26,31 @@ def wrap_api_result(result):
             "status": result.status_code
         }
 
+def rate_limiter(api_call):
+    def wrapper(*args, **kwargs):
+        sleep = 1
+        while True:
+            result = api_call(*args, **kwargs)
+            status_code = result.status_code
+            if status_code == 429:
+                with counter_rate_limit.get_lock():
+                    counter_rate_limit.value += 1
+                    print(counter_rate_limit.value)
+                time.sleep(sleep)
+                sleep += 1
+            else:
+                try:
+                    return {
+                        "text": result.json(),
+                        "status": result.status_code
+                    }
+                except JSONDecodeError:
+                    return {
+                        "text": "",
+                        "status": result.status_code
+                    }
+    return wrapper
+
 class JiraApi:
     def __init__(self, cookies=None):
         if cookies:
@@ -29,10 +61,12 @@ class JiraApi:
     def get_cookies(self):
         return self.cookies
 
+    @rate_limiter
     def get_user_details(self, user_id):
         url = "{}/user?username={}".format(JIRA_BASE_URL, user_id)
-        # print(requests.get(url, cookies=self.cookies))
-        return wrap_api_result(requests.get(url, cookies=self.cookies))
+        # return wrap_api_result(requests.get(url, cookies=self.cookies))
+        return requests.get(url, cookies=self.cookies)
+
 
     def get_project_details(self, project_key):
         url = "{}/project/{}".format(JIRA_BASE_URL, project_key)
@@ -147,7 +181,9 @@ class JiraApi:
             "description": description,
         }
         json_payload = json.dumps(body)
-        return wrap_api_result(requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
+        a = requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies)
+        print(a.text)
+        return wrap_api_result(a)
 
     def update_version(self, name, description, version_id):
         url = "{}/version/{}".format(JIRA_BASE_URL, version_id)
@@ -158,6 +194,7 @@ class JiraApi:
         json_payload = json.dumps(body)
         return wrap_api_result(requests.put(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
 
+    @rate_limiter
     def search_story(self, query, fields_to_return):
         query_string = " AND ".join(["'{}'='{}'".format(q, query[q]) for q in [*query]])
 
@@ -168,7 +205,9 @@ class JiraApi:
         }
         json_payload = json.dumps(body)
         print(body)
-        return wrap_api_result(requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
+        # return wrap_api_result(requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
+        return requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies)
+
 
     # def get_project_id_from_project_key(self, project_key):
     #     url = "{}/{}/{}".format(JIRA_BASE_URL, JIRA_END_POINTS["get_project_id_from_project_key"], project_key)

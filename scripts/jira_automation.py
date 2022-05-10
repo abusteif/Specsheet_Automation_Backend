@@ -112,7 +112,7 @@ def get_funding_from_local(project_id, issue_type="release"):
     return get_from_local(issue_type, "Funding", project_id)
 
 def create_jira_issue(issue_type, issue_details, new_user, jira_token):
-    try:
+    # try:
         jira = JiraApi(jira_token)
 
         jira_config, issue_details = prepare_jira_data(issue_details, issue_type)
@@ -127,6 +127,7 @@ def create_jira_issue(issue_type, issue_details, new_user, jira_token):
             initialise_jira(project_id, jira_token, True)
             with open(project_config_file, "r") as config_file:
                 jira_config = json.load(config_file)
+            issue_details["Affect"] = version_id
 
         for field in issue_details:
             if field == "Project":
@@ -152,26 +153,18 @@ def create_jira_issue(issue_type, issue_details, new_user, jira_token):
         if new_user and create_response["status"] == 201:
             body = {"reporter": {"name": new_user}}
             update_response = jira.update_issue(create_response["text"]["id"], body)
+        print(create_response)
         if create_response["status"] == 201:
             if issue_type == "Story":
+                body = {
+                    "version": [version_id]
+                }
                 jira.update_version(issue_details["Summary"], create_response["text"]["key"], version_id)
+                print(jira.update_issue(create_response["text"]["id"], body))
 
         return True, create_response
-    except Exception as e:
-        return False,  "Error while creating Jira Issue: {}".format(repr(e))
-
-def update_issue_details(issue_key, issue_details, project_id, issue_type, jira_token):
-    try:
-
-        request_data = prepare_issue_details(issue_details, issue_type, project_id)
-        jira = JiraApi(jira_token)
-        update_result = jira.update_issue(issue_key, request_data)
-        if update_result["status"] == 204:
-            return True, "Jira ticket updated sucessfully"
-        return False, update_result["text"]
-    except Exception as e:
-        return False,  "Error while updating Jira Issue: {}".format(repr(e))
-
+    # except Exception as e:
+    #     return False,  "Error while creating Jira Issue: {}".format(repr(e))
 
 def prepare_jira_data(issue_details, issue_type=None, project_id=None):
     issue_details = prepare_issue_data(issue_type, issue_details)

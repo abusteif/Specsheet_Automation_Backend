@@ -149,7 +149,8 @@ class Device(Resource):
         jira_token = request.headers.get("Authorization")
         issue_details = data["issueDetails"]
         new_user = data.get("newUser", None)
-        # return "ok", 201
+    #     return { "id": "4108039",
+    # "key": "WDAFY20-2737"}, 201
 
         result = create_jira_issue("device", issue_details, new_user, jira_token)
         if result[0]:
@@ -182,6 +183,7 @@ class IOTCycle(Resource):
         jira_token = request.headers.get("Authorization")
         issue_details = data["issueDetails"]
         new_user = data.get("newUser", None)
+        # print(data)
         # return "ok", 201
 
         result = create_jira_issue("iotCycle", issue_details, new_user, jira_token)

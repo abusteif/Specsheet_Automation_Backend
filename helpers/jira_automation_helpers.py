@@ -20,12 +20,16 @@ def prepare_issue_data(issue_type, data):
             new_data["Project"] = data[f]
         elif f == "summary":
             new_data["Summary"] = data[f]
+        elif f == "marketName":
+            new_data["RAG Comment"] = data[f]
         elif f == "issueType":
             pass
         elif f == "parentLink":
             new_data["Parent Link"] = data[f]
         elif f == "epicName":
             new_data["Epic Name"] = data[f]
+        elif f == "epicLink":
+            new_data["Epic Link"] = data[f]
         elif f == "testingRequestType":
             new_data["Testing Request Type"] = data[f]
         elif f == "testingPriority":
@@ -34,6 +38,10 @@ def prepare_issue_data(issue_type, data):
             new_data["WDA Test Scope"] = data[f]
         elif f == "baselineDate":
             new_data["Baseline Date"] = data[f]
+        elif f == "plannedStartDate":
+            new_data["Planned Start Date"] = data[f]
+        elif f == "plannedDeliveryDate":
+            new_data["Planned Delivery Date"] = data[f]
         elif f == "changeDescription":
             new_data["Change Description"] = data[f]
         elif f == "funding":
