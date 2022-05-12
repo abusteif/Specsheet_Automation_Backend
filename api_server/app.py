@@ -148,10 +148,10 @@ class Device(Resource):
         data = request.get_json()
         jira_token = request.headers.get("Authorization")
         issue_details = data["issueDetails"]
-        new_user = data.get("newUser", None)
-        # return "ok", 201
+    #     return { "id": "4108039",
+    # "key": "WDAFY20-2737"}, 201
 
-        result = create_jira_issue("device", issue_details, new_user, jira_token)
+        result = create_jira_issue("device", issue_details, jira_token)
         if result[0]:
             return result[1]["text"], result[1]["status"]
         else:
@@ -163,13 +163,12 @@ class Release(Resource):
         data = request.get_json()
         jira_token = request.headers.get("Authorization")
         issue_details = data["issueDetails"]
-        new_user = data.get("newUser", None)
     #     return  {
     #     "key": "WDAFY20-2440",
     #     "summary": "ACME Device Register test model (test market name)"
     # }, 201
 
-        result = create_jira_issue("release", issue_details, new_user, jira_token)
+        result = create_jira_issue("release", issue_details, jira_token)
         if result[0]:
             return result[1]["text"], result[1]["status"]
         else:
@@ -181,27 +180,29 @@ class IOTCycle(Resource):
         data = request.get_json()
         jira_token = request.headers.get("Authorization")
         issue_details = data["issueDetails"]
-        new_user = data.get("newUser", None)
+        # print(data)
         # return "ok", 201
 
-        result = create_jira_issue("iotCycle", issue_details, new_user, jira_token)
+        result = create_jira_issue("iotCycle", issue_details, jira_token)
         if result[0]:
             return result[1]["text"], result[1]["status"]
         else:
             return result[1], 500
 
-class JiraDefect(Resource):
+class Defect(Resource):
 
     def post(self):
         data = request.get_json()
-        try:
-            jira_token = request.headers.get("Authorization")
-        except KeyError:
-            jira_token = None
+        jira_token = request.headers.get("Authorization")
+        issue_details = data["issueDetails"]
         url = data["url"]
-        summary = data["summary"]
-        description = data["description"]
-        return 200, create_defect(url, summary, description, jira_token)
+        result = create_defect(issue_details, url, jira_token)
+        return "ok", 201
+
+        if result[0]:
+            return result[1]["text"], result[1]["status"]
+        else:
+            return result[1], 500
 
 class User(Resource):
 
@@ -299,7 +300,7 @@ api.add_resource(Release, '/release')
 api.add_resource(IOTCycle, '/iotCycle')
 
 # api.add_resource(JiraIssueFields, '/jiraIssueFields')
-api.add_resource(JiraDefect, '/jiraDefect')
+api.add_resource(Defect, '/defect')
 api.add_resource(JiraProject, '/jiraProject/<string:projectKey>')
 api.add_resource(Devices, '/devices/<string:projectId>')
 api.add_resource(IotCycles, '/iotCycles')

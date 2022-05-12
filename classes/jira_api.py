@@ -3,21 +3,38 @@ import json
 from json import JSONDecodeError
 from Specsheet_Automation.static_data.jira_config import JIRA_USERNAME, JIRA_PASSWORD, JIRA_BASE_URL, JIRA_AUTH_URL, \
     JIRA_HEADERS
+import time
+from multiprocessing import Value
 
 JIRA_AUTH = (JIRA_USERNAME, JIRA_PASSWORD)
 TIMEOUT = 10
+counter_rate_limit = Value('i', 0)
 
-def wrap_api_result(result):
-    try:
-        return {
-            "text": result.json(),
-            "status": result.status_code
-        }
-    except JSONDecodeError:
-        return {
-            "text": "",
-            "status": result.status_code
-        }
+
+def rate_limiter(api_call):
+    def wrapper(*args, **kwargs):
+        sleep = 2
+        while True:
+            result = api_call(*args, **kwargs)
+            status_code = result.status_code
+            if status_code == 429:
+                with counter_rate_limit.get_lock():
+                    counter_rate_limit.value += 1
+                    print("rate limit error: " + str(counter_rate_limit.value))
+                time.sleep(sleep)
+                sleep *= 2
+            else:
+                try:
+                    return {
+                        "text": result.json(),
+                        "status": result.status_code
+                    }
+                except JSONDecodeError:
+                    return {
+                        "text": "",
+                        "status": result.status_code
+                    }
+    return wrapper
 
 class JiraApi:
     def __init__(self, cookies=None):
@@ -29,61 +46,72 @@ class JiraApi:
     def get_cookies(self):
         return self.cookies
 
+    @rate_limiter
     def get_user_details(self, user_id):
         url = "{}/user?username={}".format(JIRA_BASE_URL, user_id)
-        # print(requests.get(url, cookies=self.cookies))
-        return wrap_api_result(requests.get(url, cookies=self.cookies))
+        # return wrap_api_result(requests.get(url, cookies=self.cookies))
+        return requests.get(url, cookies=self.cookies)
 
+    @rate_limiter
     def get_project_details(self, project_key):
         url = "{}/project/{}".format(JIRA_BASE_URL, project_key)
-        return wrap_api_result(requests.get(url, cookies=self.cookies))
+        return requests.get(url, cookies=self.cookies)
 
+    @rate_limiter
     def get_all_issue_types(self):
         url = "{}/issuetype".format(JIRA_BASE_URL)
-        return wrap_api_result(requests.get(url, cookies=self.cookies))
+        return requests.get(url, cookies=self.cookies)
 
+    @rate_limiter
     def get_all_issue_fields(self):
         url = "{}/field".format(JIRA_BASE_URL)
-        return wrap_api_result(requests.get(url, cookies=self.cookies))
+        return requests.get(url, cookies=self.cookies)
 
+    @rate_limiter
     def get_all_components(self, project_id):
         url = "{}/project/{}/components".format(JIRA_BASE_URL, project_id)
-        return wrap_api_result(requests.get(url, cookies=self.cookies))
+        return requests.get(url, cookies=self.cookies)
 
+    @rate_limiter
     def get_meta_data_for_issue_type(self, project_key, issue_type):
         url = "{}/issue/createmeta/{}/issuetypes/{}?maxResults=100".format(JIRA_BASE_URL, project_key, issue_type)
-        return wrap_api_result(requests.get(url, cookies=self.cookies))
+        return requests.get(url, cookies=self.cookies)
 
+    @rate_limiter
     def get_link_types(self):
         url = "{}/issueLinkType".format(JIRA_BASE_URL)
-        return wrap_api_result(requests.get(url, cookies=self.cookies))
+        return requests.get(url, cookies=self.cookies)
 
+    @rate_limiter
     def get_issue_details(self, key_or_id, fields_to_return=None):
         url = "{}/issue/{}".format(JIRA_BASE_URL, key_or_id)
         if fields_to_return:
             url += "?fields=" + ",".join(fields_to_return)
-        return wrap_api_result(requests.get(url, cookies=self.cookies))
+        return requests.get(url, cookies=self.cookies)
 
+    @rate_limiter
     def get_all_versions(self, project_id):
         url = "{}/project/{}/versions".format(JIRA_BASE_URL, project_id)
-        return wrap_api_result(requests.get(url, cookies=self.cookies))
+        return requests.get(url, cookies=self.cookies)
 
+    @rate_limiter
     def get_version_details(self, version_id):
         url = "{}/version/{}".format(JIRA_BASE_URL, version_id)
-        return wrap_api_result(requests.get(url, cookies=self.cookies))
+        return requests.get(url, cookies=self.cookies)
 
+    @rate_limiter
     def create_issue(self, fields):
         url = "{}/{}".format(JIRA_BASE_URL, "issue")
         body = {
             "fields": dict()
         }
-        # print(fields)
         for f in fields:
             if f == "update":
                 continue
             if fields[f]["type"] == "string" or \
                     fields[f]["type"] == "any" or \
-                    fields[f]["type"] == "date":
+                    fields[f]["type"] == "date" or \
+                    fields[f]["type"] == "number":
                 body["fields"][f] = fields[f]["value"]
 
             if fields[f]["type"] == "array":
@@ -102,31 +130,36 @@ class JiraApi:
                             "id": fields[f]["value"]
                         }
 
-                # else:
-                #     body["fields"][f] = [fields[f]["value"]]
             if fields[f]["type"] == "project" or \
                     fields[f]["type"] == "issuetype":
                 body["fields"][f] = {
                     "id": fields[f]["value"]
                 }
-        # body["update"] = {
-        #     "issuelinks": [{
-        #         "add": {
-        #             "type": {
-        #                 "name": "Affect",
-        #             },
-        #             "outwardIssue": {
-        #                 "key": "WDACERT-955",
+
+            if fields[f]["type"] == "user":
+                body["fields"][f] = {
+                    "name": fields[f]["value"]
+                }
+        # if "update" in fields:
+        #     body["update"] = {
+        #         "issuelinks": [{
+        #             "add": {
+        #                 "type": {
+        #                     "name": "Affect",
+        #                 },
+        #                 "outwardIssue": {
+        #                     "key": fields["update"],
         #
+        #                 }
         #             }
-        #         }
-        #     }]
-        # }
+        #         }]
+        #     }
         print(body)
         json_payload = json.dumps(body)
         # return {"text": "", "status": 400}
-        return wrap_api_result(requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
+        return requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies)
 
+    @rate_limiter
     def update_issue(self, issue_key, fields):
         url = "{}/issue/{}".format(JIRA_BASE_URL, issue_key)
         body = {
@@ -135,10 +168,9 @@ class JiraApi:
         for f in fields:
             body["fields"][f] = fields[f]
         json_payload = json.dumps(body)
-        return wrap_api_result(requests.put(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
+        return requests.put(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies)
 
-
-
+    @rate_limiter
     def create_version(self, project, name, description=None):
         url = "{}/version".format(JIRA_BASE_URL)
         body = {
@@ -147,8 +179,9 @@ class JiraApi:
             "description": description,
         }
         json_payload = json.dumps(body)
-        return wrap_api_result(requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
+        return requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies)
 
+    @rate_limiter
     def update_version(self, name, description, version_id):
         url = "{}/version/{}".format(JIRA_BASE_URL, version_id)
         body = {
@@ -156,8 +189,9 @@ class JiraApi:
             "description": description,
         }
         json_payload = json.dumps(body)
-        return wrap_api_result(requests.put(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
+        return requests.put(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies)
 
+    @rate_limiter
     def search_story(self, query, fields_to_return):
         query_string = " AND ".join(["'{}'='{}'".format(q, query[q]) for q in [*query]])
 
@@ -168,7 +202,9 @@ class JiraApi:
         }
         json_payload = json.dumps(body)
         print(body)
-        return wrap_api_result(requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
+        # return requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies))
+        return requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies)
+
 
     # def get_project_id_from_project_key(self, project_key):
     #     url = "{}/{}/{}".format(JIRA_BASE_URL, JIRA_END_POINTS["get_project_id_from_project_key"], project_key)
