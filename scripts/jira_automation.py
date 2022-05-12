@@ -113,7 +113,7 @@ def get_funding_from_local(project_id, issue_type="release"):
     return get_from_local(issue_type, "Funding", project_id)
 
 def create_jira_issue(issue_type, issue_details_raw, jira_token):
-    # try:
+    try:
         jira = JiraApi(jira_token)
 
         jira_config, issue_details = prepare_jira_data(issue_details_raw, issue_type)
@@ -173,8 +173,8 @@ def create_jira_issue(issue_type, issue_details_raw, jira_token):
                 jira.update_issue(issue_details["Epic Link"], body)
 
         return True, create_response
-    # except Exception as e:
-    #     return False,  "Error while creating Jira Issue: {}".format(repr(e))
+    except Exception as e:
+        return False,  "Error while creating Jira Issue: {}".format(repr(e))
 
 def prepare_jira_data(issue_details, issue_type=None, project_id=None):
     issue_details = prepare_issue_data(issue_type, issue_details)
