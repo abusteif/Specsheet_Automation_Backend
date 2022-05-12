@@ -1,5 +1,6 @@
 from Specsheet_Automation.classes.jira_api import JiraApi
-from Specsheet_Automation.static_data.jira_config import JIRA_ISSUE_TYPES, CONFIG_REFRESH_INTERVAL, JIRA_MANDATORY_FIELDS
+from Specsheet_Automation.static_data.jira_config import JIRA_ISSUE_TYPES, CONFIG_REFRESH_INTERVAL, \
+    JIRA_FRONTEND_TO_BACKEND_FIELD_MAPPING
 from Specsheet_Automation.helpers.jira_automation_helpers import get_config_file_for_project, prepare_issue_data, field_to_jql
 # from Specsheet_Automation.static_data.file_info import jira_config_file
 
@@ -111,34 +112,34 @@ def get_wda_test_scopes_from_local(project_id, issue_type="release"):
 def get_funding_from_local(project_id, issue_type="release"):
     return get_from_local(issue_type, "Funding", project_id)
 
-def create_jira_issue(issue_type, issue_details, new_user, jira_token):
+def create_jira_issue(issue_type, issue_details_raw, jira_token):
     # try:
         jira = JiraApi(jira_token)
 
-        jira_config, issue_details = prepare_jira_data(issue_details, issue_type)
+        jira_config, issue_details = prepare_jira_data(issue_details_raw, issue_type)
         project_id = issue_details["Project"]
-        project_config_file = get_config_file_for_project(project_id)
+
         request_data = {}
         issue_type = issue_details["Issue Type"]
 
         version_id = 0
         if issue_type == "Story":
-            version_id = jira.create_version(project_id, issue_details["Summary"])["text"]["id"]
-            initialise_jira(project_id, jira_token, True)
-            with open(project_config_file, "r") as config_file:
-                jira_config = json.load(config_file)
-            issue_details["Affect"] = version_id
+            try:
+                version_id = jira.create_version(project_id, issue_details["Summary"])["text"]["id"]
+            except KeyError:
+                print("Version already exists")
+                return False, "Story already exists"
 
         for field in issue_details:
+            print(field)
+
             if field == "Project":
                 request_data["project"] = {
                     "value": project_id,
                     "type": "project"
                 }
                 continue
-            if field == "Affect":
-                request_data["update"] = issue_details["Affect"]
-                continue
+
             if jira_config["issueTypes"][issue_type]["fields"][field]["allowedValues"]:
                 value = [v["id"] for v in jira_config["issueTypes"][issue_type]["fields"][field]["allowedValues"]
                          if v["name"] == issue_details[field]][0]
@@ -149,18 +150,27 @@ def create_jira_issue(issue_type, issue_details, new_user, jira_token):
                 "allowedValues": jira_config["issueTypes"][issue_type]["fields"][field]["allowedValues"],
                 "value": value
             }
+
+        # The lines below are a dirty cheat to make version work without having to make another api call to update story
+        # or update the whole porject config file
+        if version_id:
+            request_data["versions"] = {
+                "type": "array",
+                "allowedValues": True,
+                "value": version_id
+            }
+
         create_response = jira.create_issue(request_data)
-        if new_user and create_response["status"] == 201:
-            body = {"reporter": {"name": new_user}}
-            update_response = jira.update_issue(create_response["text"]["id"], body)
-        print(create_response)
+
         if create_response["status"] == 201:
             if issue_type == "Story":
-                body = {
-                    "version": [version_id]
-                }
                 jira.update_version(issue_details["Summary"], create_response["text"]["key"], version_id)
-                print(jira.update_issue(create_response["text"]["id"], body))
+                bau = jira_config["issueTypes"]["Epic"]["fields"]["BAU Number"]["id"]
+
+                body = {
+                    bau: issue_details_raw["bau"]
+                }
+                jira.update_issue(issue_details["Epic Link"], body)
 
         return True, create_response
     # except Exception as e:
@@ -198,7 +208,7 @@ def prepare_issue_details(issue_details, issue_type, project_id):
             request_data[jira_config["issueTypes"][issue_type]["fields"][field]["id"]] = value
     return request_data
 
-def get_devices_for_vendor(vendor, jira_token, project_id, fields_to_return=None):
+def get_devices_for_vendor(vendor, jira_token, project_id):
     try:
         jira = JiraApi(jira_token)
         data = {
@@ -206,15 +216,30 @@ def get_devices_for_vendor(vendor, jira_token, project_id, fields_to_return=None
             "projectId": project_id
         }
         jira_config, issue_details = prepare_jira_data(data, "device")
-        issue_details = prepare_jira_search(jira_config, issue_details, issue_details["Issue Type"])
-        if not fields_to_return:
-            fields_to_return = ["summary"]
-        result = jira.search_story(issue_details, fields_to_return)
+        issue_details_updated = prepare_jira_search(jira_config, issue_details, "Capability")
+
+        fields_to_return = ["summary", "modelMarketName", "type"]
+        d = {}
+        for f in fields_to_return:
+            d[JIRA_FRONTEND_TO_BACKEND_FIELD_MAPPING[f]] = None
+
+        update_fields_to_return = {}
+
+        for f in d:
+            if f != "Issue Type":
+                update_fields_to_return[f] = jira_config["issueTypes"]["Capability"]["fields"][f]["id"]
+        result = jira.search_story(issue_details_updated, [*update_fields_to_return.values()])
+
         final_result = []
         for r in result["text"]["issues"]:
+
             final_result.append({
                 "key": r["key"],
-                "summary": r["fields"]["summary"]
+                "summary": r["fields"]["summary"],
+                "modelMarketName": r["fields"][update_fields_to_return[
+                    JIRA_FRONTEND_TO_BACKEND_FIELD_MAPPING["modelMarketName"]]],
+                "type": r["fields"][update_fields_to_return[JIRA_FRONTEND_TO_BACKEND_FIELD_MAPPING["type"]]],
+
             })
         return True, final_result
     except Exception as e:
@@ -262,10 +287,6 @@ def get_user(d_number, jira_token):
     except Exception as e:
         return False,  "Error while retreiving user details: {}".format(repr(e))
 
-def create_version(project_id, name, description, jira_token):
-    jira = JiraApi(jira_token)
-    jira.create_version(project_id, name, description)
-    return
 
 def extract_story_from_url(url):
     url = unquote(url)
@@ -276,7 +297,7 @@ def extract_story_from_url(url):
     print("Project: {}\nSoftware: {}".format(project, version))
     return project, version
 
-def create_defect(url, summary, description, jira_token):
+def create_defect(issue_details, url, jira_token):
     project_id, version = extract_story_from_url(url)
     jira = JiraApi(jira_token)
     project_id = jira.get_project_details(project_id)["text"]["id"]
@@ -295,11 +316,16 @@ def create_defect(url, summary, description, jira_token):
         jira_config = json.load(config_file)
     mapped_fields = [jira_config["issueTypes"]["Story"]["fields"][f]["id"] for f in fields_to_retreive]
     values = jira.get_issue_details(story_key, mapped_fields)["text"]["fields"]
+    print(values)
+    return
     keys_values = {}
     for v_index, v in enumerate(values):
         keys_values[fields_to_retreive[mapped_fields.index(v)]] = values[v]
     keys_values["Component/s"] = keys_values["Component/s"][0]["name"]
     keys_values["Affects Version/s"] = keys_values["Affects Version/s"][0]["name"]
+
+    summary = issue_details["summary"]
+    description = issue_details["description"]
 
     issue_details = {
         "Project": project_id,
