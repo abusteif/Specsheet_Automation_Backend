@@ -101,7 +101,69 @@ class JiraApi:
 
     @rate_limiter
     def create_issue(self, fields):
-        url = "{}/{}".format(JIRA_BASE_URL, "issue")
+        return self.create_update_issue(fields)
+        # url = "{}/{}".format(JIRA_BASE_URL, "issue")
+        # body = {
+        #     "fields": dict()
+        # }
+        # for f in fields:
+        #     if f == "update":
+        #         continue
+        #     if fields[f]["type"] == "string" or \
+        #             fields[f]["type"] == "any" or \
+        #             fields[f]["type"] == "date" or \
+        #             fields[f]["type"] == "number":
+        #         body["fields"][f] = fields[f]["value"]
+        #
+        #     if fields[f]["type"] == "array":
+        #         if fields[f]["allowedValues"]:
+        #             body["fields"][f] = [
+        #                 {
+        #                     "id": fields[f]["value"]
+        #                 }
+        #             ]
+        #         else:
+        #             body["fields"][f] = [fields[f]["value"]]
+        #
+        #     if fields[f]["type"] == "option":
+        #         if fields[f]["allowedValues"]:
+        #             body["fields"][f] = {
+        #                     "id": fields[f]["value"]
+        #                 }
+        #
+        #     if fields[f]["type"] == "project" or \
+        #             fields[f]["type"] == "issuetype":
+        #         body["fields"][f] = {
+        #             "id": fields[f]["value"]
+        #         }
+        #
+        #     if fields[f]["type"] == "user":
+        #         body["fields"][f] = {
+        #             "name": fields[f]["value"]
+        #         }
+        # print(body)
+        # json_payload = json.dumps(body)
+        # # return {"text": "", "status": 400}
+        # return requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies)
+
+    @rate_limiter
+    def update_issue(self, issue_key, fields):
+        return self.create_update_issue(fields, issue_key)
+        # url = "{}/issue/{}".format(JIRA_BASE_URL, issue_key)
+        # body = {
+        #     "fields": dict()
+        # }
+        # for f in fields:
+        #     body["fields"][f] = fields[f]
+        # json_payload = json.dumps(body)
+        # return requests.put(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies)
+
+    def create_update_issue(self, fields, issue_key=None):
+        if issue_key:
+            url = "{}/issue/{}".format(JIRA_BASE_URL, issue_key)
+        else:
+            url = "{}/issue".format(JIRA_BASE_URL)
+
         body = {
             "fields": dict()
         }
@@ -140,35 +202,13 @@ class JiraApi:
                 body["fields"][f] = {
                     "name": fields[f]["value"]
                 }
-        # if "update" in fields:
-        #     body["update"] = {
-        #         "issuelinks": [{
-        #             "add": {
-        #                 "type": {
-        #                     "name": "Affect",
-        #                 },
-        #                 "outwardIssue": {
-        #                     "key": fields["update"],
-        #
-        #                 }
-        #             }
-        #         }]
-        #     }
+
         print(body)
         json_payload = json.dumps(body)
-        # return {"text": "", "status": 400}
-        return requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies)
-
-    @rate_limiter
-    def update_issue(self, issue_key, fields):
-        url = "{}/issue/{}".format(JIRA_BASE_URL, issue_key)
-        body = {
-            "fields": dict()
-        }
-        for f in fields:
-            body["fields"][f] = fields[f]
-        json_payload = json.dumps(body)
-        return requests.put(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies)
+        if issue_key:
+            return requests.put(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies)
+        else:
+            return requests.post(url, data=json_payload, headers=JIRA_HEADERS, cookies=self.cookies)
 
     @rate_limiter
     def create_version(self, project, name, description=None):
