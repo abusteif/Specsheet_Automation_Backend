@@ -14,7 +14,7 @@ from Specsheet_Automation.scripts.specsheet_automation import validate_data, \
 from Specsheet_Automation.scripts.jira_automation import initialise_jira, create_jira_issue, create_defect, \
     get_vendors_from_local, get_device_types_from_local, get_user, get_devices_for_vendor, \
     get_testing_request_types_from_local, get_testing_priorities_from_local, get_wda_test_scopes_from_local, \
-    get_funding_from_local, get_releases_for_device
+    get_funding_from_local, get_releases_for_device, update_jira_issue
 from Specsheet_Automation.static_data.file_info import logs_file_path
 from Specsheet_Automation.static_data.configuration import MAX_RETRY_COUNT, ENVIRONMENT_URL, DEV
 
@@ -148,10 +148,20 @@ class Device(Resource):
         data = request.get_json()
         jira_token = request.headers.get("Authorization")
         issue_details = data["issueDetails"]
-    #     return { "id": "4108039",
-    # "key": "WDAFY20-2737"}, 201
-
         result = create_jira_issue("device", issue_details, jira_token)
+        if result[0]:
+            return result[1]["text"], result[1]["status"]
+        else:
+            return result[1], 500
+
+    def put(self):
+        data = request.get_json()
+        jira_token = request.headers.get("Authorization")
+        issue_details = data["issueDetails"]
+        jira_ticket_id = data["jiraTicketId"]
+        # return "a", 204
+
+        result = update_jira_issue("device", issue_details, jira_ticket_id, jira_token)
         if result[0]:
             return result[1]["text"], result[1]["status"]
         else:
@@ -197,8 +207,7 @@ class Defect(Resource):
         issue_details = data["issueDetails"]
         url = data["url"]
         result = create_defect(issue_details, url, jira_token)
-        return "ok", 201
-
+        # return "ok", 201
         if result[0]:
             return result[1]["text"], result[1]["status"]
         else:
@@ -226,8 +235,11 @@ class DevicesForVendor(Resource):
 
 class ReleasesForDevice(Resource):
     def get(self, projectId, deviceTicketId):
+        fields_to_return = request.args.get("extraFieldsToReturn", None)
+        if fields_to_return:
+            fields_to_return = fields_to_return.split(",")
         jira_token = request.headers.get("Authorization")
-        result = get_releases_for_device(deviceTicketId, jira_token, projectId)
+        result = get_releases_for_device(deviceTicketId, jira_token, projectId, fields_to_return)
         if result[0]:
             return result[1], 200
         else:

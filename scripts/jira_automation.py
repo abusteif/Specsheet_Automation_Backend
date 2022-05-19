@@ -131,8 +131,6 @@ def create_jira_issue(issue_type, issue_details_raw, jira_token):
                 return False, "Story already exists"
 
         for field in issue_details:
-            print(field)
-
             if field == "Project":
                 request_data["project"] = {
                     "value": project_id,
@@ -176,8 +174,63 @@ def create_jira_issue(issue_type, issue_details_raw, jira_token):
     except Exception as e:
         return False,  "Error while creating Jira Issue: {}".format(repr(e))
 
-def prepare_jira_data(issue_details, issue_type=None, project_id=None):
-    issue_details = prepare_issue_data(issue_type, issue_details)
+def update_jira_issue(issue_type, issue_details_raw, jira_ticket_id, jira_token):
+    try:
+        print(issue_details_raw)
+        jira = JiraApi(jira_token)
+        jira_config, issue_details = prepare_jira_data(issue_details_raw, issue_type)
+        request_data = {}
+        issue_type = issue_details["Issue Type"]
+        for field in issue_details:
+            # print(field)
+            if field == "Project" or field == "Issue Type":
+                continue
+            if issue_type == "Capability":
+                if field == "Device Model" or field == "Device Type":
+                    continue
+            if jira_config["issueTypes"][issue_type]["fields"][field]["allowedValues"]:
+                value = [v["id"] for v in jira_config["issueTypes"][issue_type]["fields"][field]["allowedValues"]
+                         if v["name"] == issue_details[field]][0]
+            else:
+                value = issue_details[field]
+
+            request_data[jira_config["issueTypes"][issue_type]["fields"][field]["id"]] = {
+                "type": jira_config["issueTypes"][issue_type]["fields"][field]["type"],
+                "allowedValues": jira_config["issueTypes"][issue_type]["fields"][field]["allowedValues"],
+                "value": value
+            }
+        update_response = jira.update_issue(jira_ticket_id, request_data)
+        if update_response["status"] == 204:
+            if issue_type == "Capability":
+                releases = get_releases_for_device(jira_ticket_id, jira_token, issue_details["Project"])[1]
+                for release in releases:
+                    new_details = {
+                        "projectId": issue_details_raw["projectId"]
+                    }
+                    if "modelMarketName" in issue_details_raw:
+                        new_details["deviceModel"] = issue_details_raw["modelMarketName"]
+                        try:
+                            if "WDA_New Device Testing" in release["name"]:
+                                new_details["epicName"] = issue_details_raw["vendor"] + " " + \
+                                                          issue_details_raw["modelMarketName"] + "_" + "WDA_New Device Testing"
+                            else:
+                                new_details["epicName"] = issue_details_raw["vendor"] + " " + \
+                                                          issue_details_raw["modelMarketName"] + "_" +  \
+                                                          release["name"].split("_")[-1]
+                        except Exception as e:
+                            print(e)
+                            pass
+                    if "deviceType" in issue_details_raw:
+                        new_details["deviceType"] = issue_details_raw["deviceType"]
+
+                    print(update_jira_issue("release", new_details, release["key"], jira_token))
+        return True, update_response
+
+    except Exception as e:
+        return False,  "Error while updating Jira Issue: {}".format(repr(e))
+
+def prepare_jira_data(issue_details_raw, issue_type=None, project_id=None):
+    issue_details = prepare_issue_data(issue_type, issue_details_raw)
     if not project_id:
         project_id = issue_details["Project"]
     project_config_file = get_config_file_for_project(project_id)
@@ -253,27 +306,52 @@ def get_releases_for_device(device_ticket_id, jira_token, project_id, fields_to_
             "Parent Link": device_ticket_id
         }
         if not fields_to_return:
-            fields_to_return = {
-                "epicName": None,
-                "bau": None,
-                "testingRequestType": None
+            fields_to_return = []
+        fields_to_return.extend(["epicName", "bau", "testingRequestType"])
+        fields = dict()
+        for f in fields_to_return:
+            fields[f] = None
 
-            }
         update_fields_to_return = {}
-        jira_config, d = prepare_jira_data(fields_to_return, "release", project_id)
+        jira_config, d = prepare_jira_data(fields, "release", project_id)
         for f in d:
-            update_fields_to_return[f] = jira_config["issueTypes"]["Epic"]["fields"][f]["id"]
+            update_fields_to_return[f] = {
+                "id": jira_config["issueTypes"]["Epic"]["fields"][f]["id"],
+                "type": jira_config["issueTypes"]["Epic"]["fields"][f]["type"]
+            }
 
-        result = jira.search_story(issue_details, [*update_fields_to_return.values()])
+        # result = jira.search_story(issue_details, [*update_fields_to_return.values()])
+        result = jira.search_story(issue_details, [update_fields_to_return[f]["id"] for f in update_fields_to_return])
+
         final_result = []
-        for r in result["text"]["issues"]:
-            final_result.append({
-                "key": r["key"],
-                "name": r["fields"][update_fields_to_return["Epic Name"]],
-                "bau": r["fields"][update_fields_to_return["BAU Number"]],
-                "testingRequestType": r["fields"][update_fields_to_return["Testing Request Type"]]["value"]
+        # for r in result["text"]["issues"]:
+        #     final_result.append({
+        #         "key": r["key"],
+        #         "name": r["fields"][update_fields_to_return[JIRA_FRONTEND_TO_BACKEND_FIELD_MAPPING["epicName"]]["id"]],
+        #         "bau": r["fields"][update_fields_to_return[JIRA_FRONTEND_TO_BACKEND_FIELD_MAPPING["bau"]]["id"]],
+        #         "testingRequestType": r["fields"][update_fields_to_return[
+        #             JIRA_FRONTEND_TO_BACKEND_FIELD_MAPPING["testingRequestType"]]["id"]]["value"],
+        #         "funding": r["fields"][update_fields_to_return[
+        #             JIRA_FRONTEND_TO_BACKEND_FIELD_MAPPING["funding"]]["id"]]["value"]
+        #     })
 
-            })
+        for r in result["text"]["issues"]:
+            result_fields = {
+                "key": r["key"],
+                "name": r["fields"][update_fields_to_return[JIRA_FRONTEND_TO_BACKEND_FIELD_MAPPING["epicName"]]["id"]]
+            }
+            for f in fields_to_return:
+                if f == "epicName":
+                    continue
+                if update_fields_to_return[JIRA_FRONTEND_TO_BACKEND_FIELD_MAPPING[f]]["type"] == "option":
+                    result_fields[f] = r["fields"][update_fields_to_return[
+                            JIRA_FRONTEND_TO_BACKEND_FIELD_MAPPING[f]]["id"]]["value"]
+                else:
+                    result_fields[f] = r["fields"][update_fields_to_return[
+                            JIRA_FRONTEND_TO_BACKEND_FIELD_MAPPING[f]]["id"]]
+
+            final_result.append(result_fields)
+
         return True, final_result
     except Exception as e:
         return False,  "Error while searching for a Jira Issue: {}".format(repr(e))
