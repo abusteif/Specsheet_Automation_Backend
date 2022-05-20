@@ -163,26 +163,23 @@ def create_jira_issue(issue_type, issue_details_raw, jira_token):
         if create_response["status"] == 201:
             if issue_type == "Story":
                 jira.update_version(issue_details["Summary"], create_response["text"]["key"], version_id)
-                # bau = jira_config["issueTypes"]["Epic"]["fields"]["BAU Number"]["id"]
-                #
-                # body = {
-                #     bau: issue_details_raw["bau"]
-                # }
-                update_jira_issue("release", {"bau": issue_details_raw["bau"]}, issue_details["Epic Link"], jira_token)
+                update_body = {
+                    "bau": issue_details_raw["bau"],
+                    "projectId": issue_details_raw["projectId"]
+                }
+                update_jira_issue("release", update_body, issue_details["Epic Link"], jira_token)
 
         return True, create_response
     except Exception as e:
-        return False,  "Error while creating Jira Issue: {}".format(repr(e))
+        return False, "Error while creating Jira Issue: {}".format(repr(e))
 
 def update_jira_issue(issue_type, issue_details_raw, jira_ticket_id, jira_token):
     try:
-        print(issue_details_raw)
         jira = JiraApi(jira_token)
         jira_config, issue_details = prepare_jira_data(issue_details_raw, issue_type)
         request_data = {}
         issue_type = issue_details["Issue Type"]
         for field in issue_details:
-            # print(field)
             if field == "Project" or field == "Issue Type":
                 continue
             if issue_type == "Capability":
