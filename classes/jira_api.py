@@ -170,6 +170,7 @@ class JiraApi:
         for f in fields:
             if f == "update":
                 continue
+            print(f)
             if fields[f]["type"] == "string" or \
                     fields[f]["type"] == "any" or \
                     fields[f]["type"] == "date" or \

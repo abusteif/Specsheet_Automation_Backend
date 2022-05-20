@@ -163,12 +163,12 @@ def create_jira_issue(issue_type, issue_details_raw, jira_token):
         if create_response["status"] == 201:
             if issue_type == "Story":
                 jira.update_version(issue_details["Summary"], create_response["text"]["key"], version_id)
-                bau = jira_config["issueTypes"]["Epic"]["fields"]["BAU Number"]["id"]
-
-                body = {
-                    bau: issue_details_raw["bau"]
-                }
-                jira.update_issue(issue_details["Epic Link"], body)
+                # bau = jira_config["issueTypes"]["Epic"]["fields"]["BAU Number"]["id"]
+                #
+                # body = {
+                #     bau: issue_details_raw["bau"]
+                # }
+                update_jira_issue("release", {"bau": issue_details_raw["bau"]}, issue_details["Epic Link"], jira_token)
 
         return True, create_response
     except Exception as e:

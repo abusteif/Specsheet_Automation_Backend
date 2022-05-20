@@ -224,6 +224,27 @@ class User(Resource):
         else:
             return result[1], 500
 
+class EpicCapabilityMapping(Resource):
+
+    def post(self):
+        data = request.get_json()
+        jira_token = request.headers.get("Authorization")
+        epic = data["epic"]
+        capability = data["capability"]
+        project_id = data["projectId"]
+        print(epic, capability)
+        details = {
+            "parentLink": epic,
+            "project_id": project_id
+        }
+        result = update_jira_issue("release", details, epic, jira_token)
+        print(result)
+        if result[0]:
+            return result[1]["text"], result[1]["status"]
+        else:
+            return result[1], 500
+
+
 class DevicesForVendor(Resource):
     def get(self, projectId, vendor):
         jira_token = request.headers.get("Authorization")
@@ -317,6 +338,7 @@ api.add_resource(JiraProject, '/jiraProject/<string:projectKey>')
 api.add_resource(Devices, '/devices/<string:projectId>')
 api.add_resource(IotCycles, '/iotCycles')
 api.add_resource(Validate, '/validate')
+api.add_resource(EpicCapabilityMapping, '/epicCapabilityMapping')
 api.add_resource(PopulateSpecsheet, '/populateSpecsheet')
 api.add_resource(MSRFields, '/messageFields/<string:messageType>')
 api.add_resource(JiraInitialise, '/jiraInitialise')
