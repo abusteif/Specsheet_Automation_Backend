@@ -235,7 +235,7 @@ class EpicCapabilityMapping(Resource):
         print(epic, capability)
         details = {
             "parentLink": epic,
-            "project_id": project_id
+            "projectId": project_id
         }
         result = update_jira_issue("release", details, epic, jira_token)
         print(result)

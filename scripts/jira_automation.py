@@ -179,6 +179,7 @@ def update_jira_issue(issue_type, issue_details_raw, jira_ticket_id, jira_token)
         jira_config, issue_details = prepare_jira_data(issue_details_raw, issue_type)
         request_data = {}
         issue_type = issue_details["Issue Type"]
+        print(issue_details["Project"])
         for field in issue_details:
             if field == "Project" or field == "Issue Type":
                 continue
