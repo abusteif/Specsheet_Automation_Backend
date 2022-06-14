@@ -101,8 +101,8 @@ class PopulateSpecsheet(Resource):
 
     def post(self):
         data = request.get_json()
-        dut_name = data["device"]
-        iot_cycle = data["iotCycle"]
+        dut_name = data.get("device", "device")
+        iot_cycle = data.get("iotCycle", "iotCycle")
         hex_data = data["hexData"]
         result = extract_and_populate_specsheet(hex_data, dut_name, iot_cycle)
 
